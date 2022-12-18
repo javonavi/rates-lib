@@ -7,4 +7,8 @@ public enum SwingDirection {
     public static SwingDirection byBoolean(boolean val) {
         return val ? DOWN : UP;
     }
+
+    public boolean toBoolean() {
+        return this == UP;
+    }
 }
