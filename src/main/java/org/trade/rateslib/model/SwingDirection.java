@@ -9,6 +9,6 @@ public enum SwingDirection {
     }
 
     public boolean toBoolean() {
-        return this == UP;
+        return this == DOWN;
     }
 }
