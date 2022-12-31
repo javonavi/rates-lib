@@ -5,10 +5,10 @@ public enum SwingDirection {
     DOWN;
 
     public static SwingDirection byBoolean(boolean val) {
-        return val ? DOWN : UP;
+        return val ? UP : DOWN;
     }
 
     public boolean toBoolean() {
-        return this == DOWN;
+        return this == UP;
     }
 }
