@@ -26,7 +26,7 @@ public class SwingEntityToSwingPointConverter {
                 previousSwingTime,
                 swingEntity.getTime(),
                 timeframe);
-                ratesService.getCountBetween(stock, timeframe, swingEntity.getTime(), previousSwingTime);
+                ratesService.getCountBetween(stock, timeframe, previousSwingTime, swingEntity.getTime());
         return SwingPoint.builder()
                 .withDirection(SwingDirection.byBoolean(swingEntity.getDirection()))
                 .withLength(length)
