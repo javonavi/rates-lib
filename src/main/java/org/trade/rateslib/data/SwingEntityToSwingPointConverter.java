@@ -15,18 +15,18 @@ public class SwingEntityToSwingPointConverter {
     public static SwingPoint convert(SwingEntity swingEntity,
                                      String stock,
                                      String timeframe,
-                                     LocalDateTime previousSwingTime,
+                                     LocalDateTime nextSwingTime,
                                      RatesService ratesService) {
         double length = SwingLengthCalculator.calcTimeBetween(timeframe,
-                previousSwingTime,
-                swingEntity.getTime());
+                swingEntity.getTime(),
+                nextSwingTime);
         double lengthInBars = SwingLengthCalculator.calcBarsBetween(ratesService,
                 stock,
                 timeframe,
-                previousSwingTime,
                 swingEntity.getTime(),
+                nextSwingTime,
                 timeframe);
-                ratesService.getCountBetween(stock, timeframe, previousSwingTime, swingEntity.getTime());
+                ratesService.getCountBetween(stock, timeframe, swingEntity.getTime(), nextSwingTime);
         return SwingPoint.builder()
                 .withDirection(SwingDirection.byBoolean(swingEntity.getDirection()))
                 .withLength(length)
