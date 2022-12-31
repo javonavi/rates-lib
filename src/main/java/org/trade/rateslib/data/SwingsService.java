@@ -141,7 +141,6 @@ public class SwingsService {
      */
     public Optional<SwingEntity> findSwingBeforeTime(String stock, String timeframe, LocalDateTime time) {
         Optional<SwingEntity> swing = getRepository(stock, timeframe).findBeforeTime(time);
-        System.out.println("findSwingBeforeTime(): time=" + time + "; result=" + swing);
         return swing;
     }
 
