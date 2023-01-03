@@ -21,7 +21,7 @@ public class SwingLengthCalculator {
         Timeframe endTimeframe = Timeframe.valueOf(smallestTimeframe.toUpperCase());
 
         if (currentTimeframe == endTimeframe) {
-            return ratesService.getCountBetween(stock, endTimeframe.getCode().toLowerCase(), fromTime.plusSeconds(1), toTime);
+            return ratesService.getCountBetween(stock, endTimeframe.getCode().toLowerCase(), fromTime.minusSeconds(1), toTime);
         }
 
         // Сначала находим минимальный таймфрейм, на котором можем посчитать среднее количество баров
@@ -46,12 +46,12 @@ public class SwingLengthCalculator {
 
         // Теперь считаем среднее количество баров меньшего периода в рамках рассматриваемого периода
 
-        double smallestTotalCount = ratesService.getCountBetween(stock, endTimeframe.getCode().toLowerCase(), fromTimeInUpperTf.plusSeconds(1), toTimeInUpperTf);
+        double smallestTotalCount = ratesService.getCountBetween(stock, endTimeframe.getCode().toLowerCase(), fromTimeInUpperTf.minusSeconds(1), toTimeInUpperTf);
         if (smallestTotalCount <= 0) {
             throw new RuntimeException("Smallest total count wasn't calculated on smallest TF: " + endTimeframe);
         }
 
-        double highestTotalCount = ratesService.getCountBetween(stock, currentTimeframe.getCode().toLowerCase(), fromTimeInUpperTf.plusSeconds(1), toTimeInUpperTf);
+        double highestTotalCount = ratesService.getCountBetween(stock, currentTimeframe.getCode().toLowerCase(), fromTimeInUpperTf.minusSeconds(1), toTimeInUpperTf);
         if (highestTotalCount <= 0) {
             throw new RuntimeException("Highest total count wasn't calculated on smallest TF: " + currentTimeframe);
         }
@@ -61,10 +61,10 @@ public class SwingLengthCalculator {
         double countPerCurrentRate = smallestTotalCount / highestTotalCount;
 
         // Вычитаем то, что лишнее в начале
-        result -= (double) ratesService.getCountBetween(stock, endTimeframe.getCode().toLowerCase(), fromTimeInUpperTf.plusSeconds(1), fromTime) / countPerCurrentRate;
+        result -= (double) ratesService.getCountBetween(stock, endTimeframe.getCode().toLowerCase(), fromTimeInUpperTf.minusSeconds(1), fromTime) / countPerCurrentRate;
 
         //Добавляем то, что остутствует в конце
-        result += (double) ratesService.getCountBetween(stock, endTimeframe.getCode().toLowerCase(), toTimeInUpperTf.plusSeconds(1), toTime) / countPerCurrentRate;
+        result += (double) ratesService.getCountBetween(stock, endTimeframe.getCode().toLowerCase(), toTimeInUpperTf.minusSeconds(1), toTime) / countPerCurrentRate;
 
         return result;
     }
