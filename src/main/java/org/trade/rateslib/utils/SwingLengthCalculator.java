@@ -116,7 +116,7 @@ public class SwingLengthCalculator {
         }
         LocalDateTime nextMonthDateTime = LocalDateTime.of(nextMonthYear, nextMonth, 1, 0, 0);
         double result = calcMonthPart(fromTime, nextMonthDateTime);
-        result += calcMonthPart(toTime, LocalDateTime.of(toTime.getYear(), toTime.getMonthValue(), 1, 0, 0));
+        result += calcMonthPart(LocalDateTime.of(toTime.getYear(), toTime.getMonthValue(), 1, 0, 0), toTime);
 
         while (nextMonth < toTime.getMonthValue() || nextMonthYear < toTime.getYear()) {
             result += 1.;
