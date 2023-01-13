@@ -16,6 +16,7 @@ public class TimeframeProvider {
             case "d1": return Optional.of("h4");
             case "w1": return Optional.of("d1");
             case "mn1": return Optional.of("w1");
+            case "y1": return Optional.of("mn1");
             default: return Optional.empty();
         }
     }

@@ -32,6 +32,7 @@ public class RatesService {
         this.ratesRepository.get(stock).put("d1", repository);
         this.ratesRepository.get(stock).put("w1", repository);
         this.ratesRepository.get(stock).put("mn1", repository);
+        this.ratesRepository.get(stock).put("y1", repository);
     }
 
     public List<RateEntity> mapRates(Collection<Rate> rates, String stock, String timeframe) {

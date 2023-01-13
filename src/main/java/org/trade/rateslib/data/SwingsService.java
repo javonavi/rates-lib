@@ -36,6 +36,7 @@ public class SwingsService {
         this.swingsRepository.get(stock).put("d1", repository);
         this.swingsRepository.get(stock).put("w1", repository);
         this.swingsRepository.get(stock).put("mn1", repository);
+        this.swingsRepository.get(stock).put("y1", repository);
     }
 
     /**

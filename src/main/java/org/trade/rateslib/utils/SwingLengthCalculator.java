@@ -96,6 +96,8 @@ public class SwingLengthCalculator {
                     // в разных месяцах
                     return calcDurationTimeForMonths(fromTime, toTime);
                 }
+            case "y1":
+                return duration.toDays() / 365.;
             default:
                 break;
         }

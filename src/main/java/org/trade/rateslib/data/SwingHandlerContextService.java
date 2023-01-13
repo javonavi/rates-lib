@@ -25,6 +25,7 @@ public class SwingHandlerContextService {
         this.repository.get(stock).put("d1", repository);
         this.repository.get(stock).put("w1", repository);
         this.repository.get(stock).put("mn1", repository);
+        this.repository.get(stock).put("y1", repository);
     }
 
     /**
