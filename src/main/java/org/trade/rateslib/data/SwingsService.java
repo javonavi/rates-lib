@@ -75,7 +75,10 @@ public class SwingsService {
      * @return
      */
     public Optional<SwingEntity> getSwing(String stock, String timeframe, int index) {
-        return Optional.ofNullable(getRepository(stock, timeframe).getByIndex(index));
+        if (getRepository(stock, timeframe).count() <= index) {
+            return Optional.empty();
+        }
+        return Optional.of(getRepository(stock, timeframe).getByIndex(index));
     }
 
     public void save(String stock, String timeframe, SwingPoint swingPoint) {
