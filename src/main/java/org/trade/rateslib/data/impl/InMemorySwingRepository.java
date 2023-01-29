@@ -37,6 +37,11 @@ public class InMemorySwingRepository implements SwingRepository {
     }
 
     @Override
+    public Optional<SwingEntity> findAfterTime(LocalDateTime time) {
+        return Optional.ofNullable(tree.higherEntry(time)).map(Map.Entry::getValue);
+    }
+
+    @Override
     public List<SwingEntity> findAllByTimeBetween(LocalDateTime timeStart, LocalDateTime timeEnd) {
         if (timeStart.minusSeconds(timeStart.getSecond()).equals(timeEnd.minusSeconds(timeEnd.getSecond()))) {
             return Collections.singletonList(tree.get(timeStart));
