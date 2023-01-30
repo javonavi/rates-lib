@@ -84,7 +84,7 @@ public class SwingsService {
 
     public void save(String stock, String timeframe, SwingPoint swingPoint) {
         SwingEntity entity = createClass(stock, timeframe);
-        entity.setDirection(SwingDirection.DOWN == swingPoint.getDirection());
+        entity.setDirection(swingPoint.getDirection().toBoolean());
         entity.setLength(swingPoint.getLength());
         entity.setLengthInBars(swingPoint.getLengthInBars());
         entity.setPrice(swingPoint.getPrice().doubleValue());
@@ -156,7 +156,7 @@ public class SwingsService {
 
     public SwingPoint convertEntityToSwing(SwingEntity entity, String timeframe) {
         return SwingPoint.builder()
-                .withDirection(entity.getDirection() ? SwingDirection.DOWN : SwingDirection.UP)
+                .withDirection(SwingDirection.byBoolean(entity.getDirection()))
                 .withPrice(BigDecimal.valueOf(entity.getPrice()))
                 .withSection(0)
                 .withTime(entity.getTime())
