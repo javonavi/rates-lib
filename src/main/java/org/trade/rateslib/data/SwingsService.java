@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.abs;
@@ -27,16 +28,16 @@ public class SwingsService {
         this.swingsRepository = new HashMap<>();
     }
 
-    public synchronized void init(String stock, SwingRepository repository) {
+    public synchronized void init(String stock, Supplier<SwingRepository> repositorySupplier) {
         this.swingsRepository.put(stock, new HashMap<>());
-        this.swingsRepository.get(stock).put("m5", repository);
-        this.swingsRepository.get(stock).put("m15", repository);
-        this.swingsRepository.get(stock).put("h1", repository);
-        this.swingsRepository.get(stock).put("h4", repository);
-        this.swingsRepository.get(stock).put("d1", repository);
-        this.swingsRepository.get(stock).put("w1", repository);
-        this.swingsRepository.get(stock).put("mn1", repository);
-        this.swingsRepository.get(stock).put("y1", repository);
+        this.swingsRepository.get(stock).put("m5", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("m15", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("h1", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("h4", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("d1", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("w1", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("mn1", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("y1", repositorySupplier.get());
     }
 
     /**
