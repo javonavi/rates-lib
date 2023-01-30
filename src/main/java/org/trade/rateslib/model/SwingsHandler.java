@@ -505,7 +505,7 @@ public class SwingsHandler {
                 .withSection(0)
                 .withTime(context.getLastWorkingPoint())
                 .withTimeframe(timeframe)
-                .withDirection(direction ? SwingDirection.DOWN : SwingDirection.UP)
+                .withDirection(SwingDirection.byBoolean(direction))
                 .withPrice(BigDecimal.valueOf(price))
                 .build();
 
