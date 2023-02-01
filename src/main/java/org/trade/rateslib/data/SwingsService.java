@@ -149,11 +149,26 @@ public class SwingsService {
         return swing;
     }
 
+    /**
+     * Возвращает следующий свинг
+     *
+     * @param stock
+     * @param timeframe
+     * @param time
+     * @return
+     */
     public Optional<SwingEntity> findSwingAfterTime(String stock, String timeframe, LocalDateTime time) {
         Optional<SwingEntity> swing = getRepository(stock, timeframe).findAfterTime(time);
         return swing;
     }
 
+    /**
+     * Конвертирует entity в свинг
+     *
+     * @param entity
+     * @param timeframe
+     * @return
+     */
     public SwingPoint convertEntityToSwing(SwingEntity entity, String timeframe) {
         return SwingPoint.builder()
                 .withDirection(SwingDirection.byBoolean(entity.getDirection()))

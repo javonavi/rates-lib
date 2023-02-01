@@ -21,8 +21,8 @@ import static java.lang.Math.max;
  */
 public class SwingsHandler {
 
-    private static final Boolean UP = false;
-    private static final Boolean DOWN = true;
+    private static final Boolean UP = true;
+    private static final Boolean DOWN = false;
 
     private SwingHandlerContextEntity context;
     private final int reverseBarsCount;
