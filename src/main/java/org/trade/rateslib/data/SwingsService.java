@@ -204,7 +204,8 @@ public class SwingsService {
                         }
                     });
             if (swingEntity.isPresent()) {
-                return swingEntity.map(se -> convertEntityToSwing(se, timeframe));
+                String tf = currentTimeframe.getCode();
+                return swingEntity.map(se -> convertEntityToSwing(se, tf));
             }
             if (currentTimeframe.getPrev().isEmpty()) {
                 break;
