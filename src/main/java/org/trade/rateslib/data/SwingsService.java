@@ -187,10 +187,10 @@ public class SwingsService {
         requireNonNull(stock, "stock");
         requireNonNull(timeframe, "timeframe");
         requireNonNull(time, "time");
-
         Timeframe currentTimeframe = Timeframe.valueOf(timeframe.toUpperCase());
-        LocalDateTime fromTime = time.minusMinutes(currentTimeframe.getValue());
-        LocalDateTime toTime = time.plusMinutes(currentTimeframe.getValue());
+        Timeframe upperTimeframe = currentTimeframe.getNext().get();
+        LocalDateTime fromTime = time.minusMinutes(upperTimeframe.getValue());
+        LocalDateTime toTime = time.plusMinutes(upperTimeframe.getValue());
         while (true) {
             List<SwingEntity> swingsCandidates = getRepository(stock, currentTimeframe.getCode().toLowerCase())
                     .findAllByTimeBetween(fromTime, toTime);
