@@ -192,8 +192,9 @@ public class SwingsService {
         LocalDateTime fromTime = time.minusMinutes(currentTimeframe.getValue());
         LocalDateTime toTime = time.plusMinutes(currentTimeframe.getValue());
         while (true) {
-            Optional<SwingEntity> swingEntity = getRepository(stock, currentTimeframe.getCode().toLowerCase())
-                    .findAllByTimeBetween(fromTime, toTime).stream()
+            List<SwingEntity> swingsCandidates = getRepository(stock, currentTimeframe.getCode().toLowerCase())
+                    .findAllByTimeBetween(fromTime, toTime);
+            Optional<SwingEntity> swingEntity = swingsCandidates.stream()
                     .filter(swing -> ((SwingEntity) swing).getDirection() == swingDirection)
                     .min(new Comparator() {
                         @Override
