@@ -65,11 +65,34 @@ public class Logger {
                 .replaceFirst("\\{\\}", toString(o6)));
     }
 
+    public void info(String message, Object o1, Object o2) {
+        log(Level.INFO, message
+                .replaceFirst("\\{\\}", toString(o1))
+                .replaceFirst("\\{\\}", toString(o2)));
+    }
+
     public void info(String message, Object o1, Object o2, Object o3) {
         log(Level.INFO, message
                 .replaceFirst("\\{\\}", toString(o1))
                 .replaceFirst("\\{\\}", toString(o2))
                 .replaceFirst("\\{\\}", toString(o3)));
+    }
+
+    public void info(String message, Object o1, Object o2, Object o3, Object o4) {
+        log(Level.INFO, message
+                .replaceFirst("\\{\\}", toString(o1))
+                .replaceFirst("\\{\\}", toString(o2))
+                .replaceFirst("\\{\\}", toString(o3))
+                .replaceFirst("\\{\\}", toString(o4)));
+    }
+
+    public void info(String message, Object o1, Object o2, Object o3, Object o4, Object o5) {
+        log(Level.INFO, message
+                .replaceFirst("\\{\\}", toString(o1))
+                .replaceFirst("\\{\\}", toString(o2))
+                .replaceFirst("\\{\\}", toString(o3))
+                .replaceFirst("\\{\\}", toString(o4))
+                .replaceFirst("\\{\\}", toString(o5)));
     }
 
     public void info(String message, Object o1) {

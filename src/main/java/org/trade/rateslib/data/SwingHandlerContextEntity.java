@@ -30,10 +30,6 @@ public class SwingHandlerContextEntity {
 
     private LocalDateTime lastWorkingPoint;
 
-    private Integer barsUpCount = 0;
-
-    private Integer barsDownCount = 0;
-
     private Double lastUpSwing;
 
     private Double lastDownSwing;
@@ -83,14 +79,6 @@ public class SwingHandlerContextEntity {
 
     public LocalDateTime getLastWorkingPoint() {
         return lastWorkingPoint;
-    }
-
-    public Integer getBarsUpCount() {
-        return barsUpCount;
-    }
-
-    public Integer getBarsDownCount() {
-        return barsDownCount;
     }
 
     public Double getLastUpSwing() {
@@ -149,14 +137,6 @@ public class SwingHandlerContextEntity {
         this.lastWorkingPoint = lastWorkingPoint;
     }
 
-    public void setBarsUpCount(Integer barsUpCount) {
-        this.barsUpCount = barsUpCount;
-    }
-
-    public void setBarsDownCount(Integer barsDownCount) {
-        this.barsDownCount = barsDownCount;
-    }
-
     public void setLastUpSwing(Double lastUpSwing) {
         this.lastUpSwing = lastUpSwing;
     }
@@ -195,8 +175,6 @@ public class SwingHandlerContextEntity {
                 ", reverseBarsCount=" + reverseBarsCount +
                 ", waitingReverseCount=" + waitingReverseCount +
                 ", lastWorkingPoint=" + lastWorkingPoint +
-                ", barsUpCount=" + barsUpCount +
-                ", barsDownCount=" + barsDownCount +
                 ", lastUpSwing=" + lastUpSwing +
                 ", lastDownSwing=" + lastDownSwing +
                 ", lastWorkingPrice=" + lastWorkingPrice +
