@@ -284,6 +284,28 @@ public class SwingsHandler {
             }
         }
 
+        if (!alreadyReverse && DOWN == context.getCurrentDirection()
+                && Double.compare(rate.getHigh().doubleValue(), context.getLocalHigh()) > 0) {
+            Optional<RateEntity> prevRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount);
+            if (prevRate.isPresent()
+                && ratesStorage.getHighestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isPresent()
+                && ratesStorage.getLowestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isEmpty()) {
+                result = reverse(rate.getTime(), UP, "barsUpCount", ratesStorage);
+                alreadyReverse = true;
+            }
+        }
+
+        if (!alreadyReverse && UP == context.getCurrentDirection()
+                && Double.compare(rate.getLow().doubleValue(), context.getLocalLow()) < 0) {
+            Optional<RateEntity> prevRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount);
+            if (prevRate.isPresent()
+                    && ratesStorage.getLowestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isPresent()
+                    && ratesStorage.getHighestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isEmpty()) {
+                result = reverse(rate.getTime(), DOWN, "barsDownCount", ratesStorage);
+                alreadyReverse = true;
+            }
+        }
+
         context.setLocalHigh(rate.getHigh().doubleValue());
         context.setLocalLow(rate.getLow().doubleValue());
 
