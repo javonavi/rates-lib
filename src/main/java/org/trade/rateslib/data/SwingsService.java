@@ -150,6 +150,30 @@ public class SwingsService {
     }
 
     /**
+     * Возвращает предыдущий свинг с определенным направлением
+     *
+     * @param stock
+     * @param timeframe
+     * @param time
+     * @param direction
+     * @return
+     */
+    public Optional<SwingEntity> findSwingBeforeTime(String stock, String timeframe, LocalDateTime time, SwingDirection direction) {
+        LocalDateTime beforeTime = time;
+        for (int i = 0; i < 10; i++) {
+            Optional<SwingEntity> swing = getRepository(stock, timeframe).findBeforeTime(beforeTime);
+            if (swing.isEmpty()) {
+                break;
+            }
+            if (swing.get().getDirection().equals(direction.toBoolean())) {
+                return swing;
+            }
+            beforeTime = swing.get().getTime();
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Возвращает следующий свинг
      *
      * @param stock
@@ -160,6 +184,30 @@ public class SwingsService {
     public Optional<SwingEntity> findSwingAfterTime(String stock, String timeframe, LocalDateTime time) {
         Optional<SwingEntity> swing = getRepository(stock, timeframe).findAfterTime(time);
         return swing;
+    }
+
+    /**
+     * Возвращает следующий свинг с определенным направлением
+     *
+     * @param stock
+     * @param timeframe
+     * @param time
+     * @param direction
+     * @return
+     */
+    public Optional<SwingEntity> findSwingAfterTime(String stock, String timeframe, LocalDateTime time, SwingDirection direction) {
+        LocalDateTime afterTime = time;
+        for (int i = 0; i < 10; i++) {
+            Optional<SwingEntity> swing = getRepository(stock, timeframe).findAfterTime(afterTime);
+            if (swing.isEmpty()) {
+                break;
+            }
+            if (swing.get().getDirection().equals(direction.toBoolean())) {
+                return swing;
+            }
+            afterTime = swing.get().getTime();
+        }
+        return Optional.empty();
     }
 
     /**
