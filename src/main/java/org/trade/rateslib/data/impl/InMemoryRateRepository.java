@@ -50,6 +50,9 @@ public class InMemoryRateRepository implements RateRepository {
         if (timeStart.minusSeconds(timeStart.getSecond()).equals(timeEnd.minusSeconds(timeEnd.getSecond()))) {
             return Collections.singletonList(tree.get(timeStart));
         }
+        if (timeStart.isBefore(timeEnd)) {
+            throw new RuntimeException("Start must be greaten than end: timeStart=" + timeStart + "; timeEnd=" + timeEnd);
+        }
         return new ArrayList<>(tree.subMap(timeStart, true, timeEnd, true).values());
     }
 
