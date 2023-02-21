@@ -63,4 +63,15 @@ public class InMemorySwingRepository implements SwingRepository {
     public int count() {
         return tree.size();
     }
+
+    @Override
+    public List<SwingEntity> getLatest(int count) {
+        List<SwingEntity> list = new ArrayList<>(tree.values());
+        if (count > list.size()) {
+            throw new RuntimeException("Count more than list size: count=" + count + "; listSize=" + list.size());
+        }
+        List<SwingEntity> result = list.subList(list.size() - count - 1, count);
+        Collections.reverse(result);
+        return result;
+    }
 }

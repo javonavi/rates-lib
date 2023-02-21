@@ -1,6 +1,7 @@
 package org.trade.rateslib.data;
 
 import org.trade.rateslib.model.Rate;
+import org.trade.rateslib.model.SwingPoint;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -190,5 +191,11 @@ public class RatesService {
 
     public void deleteAll(String stock, String timeframe) {
         getRepository(stock, timeframe).deleteAll();
+    }
+
+    public List<RateEntity> getLatest(String stock,
+                                      String timeframe,
+                                      int count) {
+        return getRepository(stock, timeframe).getLatest(count);
     }
 }

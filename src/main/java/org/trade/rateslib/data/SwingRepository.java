@@ -24,4 +24,6 @@ public interface SwingRepository {
     void save(SwingEntity swingEntity);
 
     int count();
+
+    List<SwingEntity> getLatest(int count);
 }

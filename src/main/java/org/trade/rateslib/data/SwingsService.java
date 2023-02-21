@@ -283,4 +283,10 @@ public class SwingsService {
         Optional<SwingEntity> swingPoint = Optional.ofNullable(getRepository(stock, timeframe).findByTime(time));
         return swingPoint.map(se -> convertEntityToSwing(se, timeframe));
     }
+
+    public List<SwingEntity> getLatest(String stock,
+                                       String timeframe,
+                                       int count) {
+        return getRepository(stock, timeframe).getLatest(count);
+    }
 }

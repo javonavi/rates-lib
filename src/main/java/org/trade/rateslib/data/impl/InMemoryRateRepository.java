@@ -103,4 +103,15 @@ public class InMemoryRateRepository implements RateRepository {
     public void deleteAll() {
         tree.clear();
     }
+
+    @Override
+    public List<RateEntity> getLatest(int count) {
+        List<RateEntity> list = new ArrayList<>(tree.values());
+        if (count > list.size()) {
+            throw new RuntimeException("Count more than list size: count=" + count + "; listSize=" + list.size());
+        }
+        List<RateEntity> result = list.subList(list.size() - count - 1, count);
+        Collections.reverse(result);
+        return result;
+    }
 }
