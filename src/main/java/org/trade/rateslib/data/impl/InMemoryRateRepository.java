@@ -110,7 +110,7 @@ public class InMemoryRateRepository implements RateRepository {
         if (count > list.size()) {
             throw new RuntimeException("Count more than list size: count=" + count + "; listSize=" + list.size());
         }
-        List<RateEntity> result = list.subList(list.size() - count - 1, list.size() - count);
+        List<RateEntity> result = list.subList(list.size() - count - 1, list.size() - 1);
         Collections.reverse(result);
         return result;
     }

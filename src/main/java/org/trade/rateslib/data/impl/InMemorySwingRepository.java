@@ -70,7 +70,7 @@ public class InMemorySwingRepository implements SwingRepository {
         if (count > list.size()) {
             throw new RuntimeException("Count more than list size: count=" + count + "; listSize=" + list.size());
         }
-        List<SwingEntity> result = list.subList(list.size() - count - 1, list.size() - count);
+        List<SwingEntity> result = list.subList(list.size() - count - 1, list.size() - 1);
         Collections.reverse(result);
         return result;
     }
