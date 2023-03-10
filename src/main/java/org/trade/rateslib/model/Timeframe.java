@@ -1,29 +1,30 @@
 package org.trade.rateslib.model;
 
 import java.time.Duration;
+import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 
 public enum Timeframe {
-    M5("M5", 5, "M15", null, Duration.ofMinutes(5)),
-    M15("M15", 15, "H1", "M5", Duration.ofMinutes(15)),
-    H1("H1", 60, "H4", "M15", Duration.ofHours(1)),
-    H4("H4", 240, "D1", "H1", Duration.ofHours(4)),
-    D1("D1", 1440, "W1", "H4", Duration.ofDays(1)),
-    W1("W1", 10080, "MN1", "D1", Duration.of(1, ChronoUnit.WEEKS)),
-    MN1("MN1", 43200, "MN3", "W1", Duration.of(1, ChronoUnit.MONTHS)),
-    MN3("MN3", 129600, "Y1", "MN1", Duration.of(3, ChronoUnit.MONTHS)),
-    Y1("Y1", 518400, null, "MN3", Duration.of(1, ChronoUnit.YEARS));
+    M5("M5", 5, "M15", null, TimeframeDuration.of(Period.ZERO, Duration.ofMinutes(5))),
+    M15("M15", 15, "H1", "M5", TimeframeDuration.of(Period.ZERO, Duration.ofMinutes(15))),
+    H1("H1", 60, "H4", "M15", TimeframeDuration.of(Period.ZERO, Duration.ofHours(1))),
+    H4("H4", 240, "D1", "H1", TimeframeDuration.of(Period.ZERO, Duration.ofHours(4))),
+    D1("D1", 1440, "W1", "H4", TimeframeDuration.of(Period.ofDays(1), Duration.ZERO)),
+    W1("W1", 10080, "MN1", "D1", TimeframeDuration.of(Period.ofWeeks(1), Duration.ZERO)),
+    MN1("MN1", 43200, "MN3", "W1", TimeframeDuration.of(Period.ofMonths(1), Duration.ZERO)),
+    MN3("MN3", 129600, "Y1", "MN1", TimeframeDuration.of(Period.ofMonths(3), Duration.ZERO)),
+    Y1("Y1", 518400, null, "MN3", TimeframeDuration.of(Period.ofYears(1), Duration.ZERO));
 
     private final String code;
     private final Integer value;
     private final String nextTimeframe;
     private final String prevTimeframe;
-    private final Duration duration;
+    private final TimeframeDuration duration;
 
-    Timeframe(String code, Integer value, String nextTimeframe, String prevTimeframe, Duration duration) {
+    Timeframe(String code, Integer value, String nextTimeframe, String prevTimeframe, TimeframeDuration duration) {
         this.code = code;
         this.value = value;
         this.nextTimeframe = nextTimeframe;
@@ -72,7 +73,29 @@ public enum Timeframe {
         return this.value >= Objects.requireNonNull(timeframe, "timeframe").getValue();
     }
 
-    public Duration getDuration() {
+    public TimeframeDuration getDuration() {
         return duration;
+    }
+
+    private static class TimeframeDuration {
+        private final Period period;
+        private final Duration duration;
+
+        private TimeframeDuration(Period period, Duration duration) {
+            this.period = period;
+            this.duration = duration;
+        }
+
+        public Period getPeriod() {
+            return period;
+        }
+
+        public Duration getDuration() {
+            return duration;
+        }
+
+        public static TimeframeDuration of(Period period, Duration duration) {
+            return new TimeframeDuration(period, duration);
+        }
     }
 }
