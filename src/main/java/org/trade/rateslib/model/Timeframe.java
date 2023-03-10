@@ -77,7 +77,7 @@ public enum Timeframe {
         return duration;
     }
 
-    private static class TimeframeDuration {
+    public static class TimeframeDuration {
         private final Period period;
         private final Duration duration;
 
