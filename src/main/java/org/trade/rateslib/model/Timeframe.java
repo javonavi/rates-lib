@@ -2,34 +2,38 @@ package org.trade.rateslib.model;
 
 import java.time.Duration;
 import java.time.Period;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 public enum Timeframe {
-    M5("M5", 5, "M15", null, TimeframeDuration.of(Period.ZERO, Duration.ofMinutes(5))),
-    M15("M15", 15, "H1", "M5", TimeframeDuration.of(Period.ZERO, Duration.ofMinutes(15))),
-    H1("H1", 60, "H4", "M15", TimeframeDuration.of(Period.ZERO, Duration.ofHours(1))),
-    H4("H4", 240, "D1", "H1", TimeframeDuration.of(Period.ZERO, Duration.ofHours(4))),
-    D1("D1", 1440, "W1", "H4", TimeframeDuration.of(Period.ofDays(1), Duration.ZERO)),
-    W1("W1", 10080, "MN1", "D1", TimeframeDuration.of(Period.ofWeeks(1), Duration.ZERO)),
-    MN1("MN1", 43200, "MN3", "W1", TimeframeDuration.of(Period.ofMonths(1), Duration.ZERO)),
-    MN3("MN3", 129600, "Y1", "MN1", TimeframeDuration.of(Period.ofMonths(3), Duration.ZERO)),
-    Y1("Y1", 518400, null, "MN3", TimeframeDuration.of(Period.ofYears(1), Duration.ZERO));
+    M5("M5", 5, "M15", null, cnt -> TimeframeDuration.of(Period.ZERO, Duration.ofMinutes(cnt * 5))),
+    M15("M15", 15, "H1", "M5", cnt -> TimeframeDuration.of(Period.ZERO, Duration.ofMinutes(cnt * 15))),
+    H1("H1", 60, "H4", "M15", cnt -> TimeframeDuration.of(Period.ZERO, Duration.ofHours(cnt))),
+    H4("H4", 240, "D1", "H1", cnt -> TimeframeDuration.of(Period.ZERO, Duration.ofHours(cnt * 4))),
+    D1("D1", 1440, "W1", "H4", cnt -> TimeframeDuration.of(Period.ofDays(cnt.intValue()), Duration.ZERO)),
+    W1("W1", 10080, "MN1", "D1", cnt -> TimeframeDuration.of(Period.ofWeeks(cnt.intValue()), Duration.ZERO)),
+    MN1("MN1", 43200, "MN3", "W1", cnt -> TimeframeDuration.of(Period.ofMonths(cnt.intValue()), Duration.ZERO)),
+    MN3("MN3", 129600, "Y1", "MN1", cnt -> TimeframeDuration.of(Period.ofMonths(cnt.intValue() * 3), Duration.ZERO)),
+    Y1("Y1", 518400, null, "MN3", cnt -> TimeframeDuration.of(Period.ofYears(cnt.intValue()), Duration.ZERO));
 
     private final String code;
     private final Integer value;
     private final String nextTimeframe;
     private final String prevTimeframe;
-    private final TimeframeDuration duration;
+    private final Function<Long, TimeframeDuration> durationSupplier;
 
-    Timeframe(String code, Integer value, String nextTimeframe, String prevTimeframe, TimeframeDuration duration) {
+    Timeframe(String code,
+              Integer value,
+              String nextTimeframe,
+              String prevTimeframe,
+              Function<Long, TimeframeDuration> durationSupplier) {
         this.code = code;
         this.value = value;
         this.nextTimeframe = nextTimeframe;
         this.prevTimeframe = prevTimeframe;
-        this.duration = duration;
+        this.durationSupplier = durationSupplier;
     }
 
     public String getCode() {
@@ -73,8 +77,12 @@ public enum Timeframe {
         return this.value >= Objects.requireNonNull(timeframe, "timeframe").getValue();
     }
 
+    public TimeframeDuration getDuration(long count) {
+        return durationSupplier.apply(count);
+    }
+
     public TimeframeDuration getDuration() {
-        return duration;
+        return getDuration(1);
     }
 
     public static class TimeframeDuration {
