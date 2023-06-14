@@ -526,7 +526,7 @@ public class SwingsHandler {
         RateEntity rate = ratesStorage.getRate(stock, timeframe, shift)
                 .orElseThrow();
         double price = direction == UP ? rate.getLow() : rate.getHigh();
-        log.info("Reverse: price={}, time={}, shift={}, reason={}, reverseTime={}", price, context.getLastWorkingPoint(), shift,
+        log.debug("Reverse: price={}, time={}, shift={}, reason={}, reverseTime={}", price, context.getLastWorkingPoint(), shift,
                 cause, ratesStorage.getRate(stock, timeframe, 0).map(RateEntity::getTime).orElse(null));
         SwingPoint swing = SwingPoint.builder()
                 .withSection(0)
@@ -563,7 +563,7 @@ public class SwingsHandler {
             }
         }
 
-        log.info("Add swing: swing={}", swing);
+        log.debug("Add swing: swing={}", swing);
 
         context.setWaitingReverseCount(0);
         log.trace("newLastWorkingPoint={}", newLastWorkingPoint);
