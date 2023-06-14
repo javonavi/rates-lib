@@ -61,7 +61,7 @@ public class Logger {
                 .replaceFirst("\\{\\}", toString(o2))
                 .replaceFirst("\\{\\}", toString(o3))
                 .replaceFirst("\\{\\}", toString(o4))
-                .replaceFirst("\\{\\}", toString(o5));
+                .replaceFirst("\\{\\}", toString(o5)));
     }
 
     public void debug(String message, Object o1, Object o2, Object o3, Object o4, Object o5, Object o6) {
