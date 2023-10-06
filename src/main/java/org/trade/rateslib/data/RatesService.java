@@ -1,6 +1,7 @@
 package org.trade.rateslib.data;
 
 import org.trade.rateslib.model.Rate;
+import org.trade.rateslib.model.SwingPoint;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -9,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -23,15 +25,16 @@ public class RatesService {
         this.ratesRepository = new HashMap<>();
     }
 
-    public synchronized void init(String stock, RateRepository repository) {
+    public synchronized void init(String stock, Supplier<RateRepository> repositorySupplier) {
         this.ratesRepository.put(stock, new HashMap<>());
-        this.ratesRepository.get(stock).put("m5", repository);
-        this.ratesRepository.get(stock).put("m15", repository);
-        this.ratesRepository.get(stock).put("h1", repository);
-        this.ratesRepository.get(stock).put("h4", repository);
-        this.ratesRepository.get(stock).put("d1", repository);
-        this.ratesRepository.get(stock).put("w1", repository);
-        this.ratesRepository.get(stock).put("mn1", repository);
+        this.ratesRepository.get(stock).put("m5", repositorySupplier.get());
+        this.ratesRepository.get(stock).put("m15", repositorySupplier.get());
+        this.ratesRepository.get(stock).put("h1", repositorySupplier.get());
+        this.ratesRepository.get(stock).put("h4", repositorySupplier.get());
+        this.ratesRepository.get(stock).put("d1", repositorySupplier.get());
+        this.ratesRepository.get(stock).put("w1", repositorySupplier.get());
+        this.ratesRepository.get(stock).put("mn1", repositorySupplier.get());
+        this.ratesRepository.get(stock).put("y1", repositorySupplier.get());
     }
 
     public List<RateEntity> mapRates(Collection<Rate> rates, String stock, String timeframe) {
@@ -188,5 +191,11 @@ public class RatesService {
 
     public void deleteAll(String stock, String timeframe) {
         getRepository(stock, timeframe).deleteAll();
+    }
+
+    public List<RateEntity> getLatest(String stock,
+                                      String timeframe,
+                                      int count) {
+        return getRepository(stock, timeframe).getLatest(count);
     }
 }

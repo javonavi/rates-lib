@@ -32,4 +32,6 @@ public interface RateRepository {
     int count();
 
     void deleteAll();
+
+    List<RateEntity> getLatest(int count);
 }

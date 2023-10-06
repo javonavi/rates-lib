@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.abs;
@@ -27,15 +28,16 @@ public class SwingsService {
         this.swingsRepository = new HashMap<>();
     }
 
-    public synchronized void init(String stock, SwingRepository repository) {
+    public synchronized void init(String stock, Supplier<SwingRepository> repositorySupplier) {
         this.swingsRepository.put(stock, new HashMap<>());
-        this.swingsRepository.get(stock).put("m5", repository);
-        this.swingsRepository.get(stock).put("m15", repository);
-        this.swingsRepository.get(stock).put("h1", repository);
-        this.swingsRepository.get(stock).put("h4", repository);
-        this.swingsRepository.get(stock).put("d1", repository);
-        this.swingsRepository.get(stock).put("w1", repository);
-        this.swingsRepository.get(stock).put("mn1", repository);
+        this.swingsRepository.get(stock).put("m5", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("m15", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("h1", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("h4", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("d1", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("w1", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("mn1", repositorySupplier.get());
+        this.swingsRepository.get(stock).put("y1", repositorySupplier.get());
     }
 
     /**
@@ -74,12 +76,15 @@ public class SwingsService {
      * @return
      */
     public Optional<SwingEntity> getSwing(String stock, String timeframe, int index) {
-        return Optional.ofNullable(getRepository(stock, timeframe).getByIndex(index));
+        if (getRepository(stock, timeframe).count() <= index) {
+            return Optional.empty();
+        }
+        return Optional.of(getRepository(stock, timeframe).getByIndex(index));
     }
 
     public void save(String stock, String timeframe, SwingPoint swingPoint) {
         SwingEntity entity = createClass(stock, timeframe);
-        entity.setDirection(SwingDirection.DOWN == swingPoint.getDirection());
+        entity.setDirection(swingPoint.getDirection().toBoolean());
         entity.setLength(swingPoint.getLength());
         entity.setLengthInBars(swingPoint.getLengthInBars());
         entity.setPrice(swingPoint.getPrice().doubleValue());
@@ -144,9 +149,77 @@ public class SwingsService {
         return swing;
     }
 
+    /**
+     * Возвращает предыдущий свинг с определенным направлением
+     *
+     * @param stock
+     * @param timeframe
+     * @param time
+     * @param direction
+     * @return
+     */
+    public Optional<SwingEntity> findSwingBeforeTime(String stock, String timeframe, LocalDateTime time, SwingDirection direction) {
+        LocalDateTime beforeTime = time;
+        for (int i = 0; i < 10; i++) {
+            Optional<SwingEntity> swing = getRepository(stock, timeframe).findBeforeTime(beforeTime);
+            if (swing.isEmpty()) {
+                break;
+            }
+            if (swing.get().getDirection().equals(direction.toBoolean())) {
+                return swing;
+            }
+            beforeTime = swing.get().getTime();
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Возвращает следующий свинг
+     *
+     * @param stock
+     * @param timeframe
+     * @param time
+     * @return
+     */
+    public Optional<SwingEntity> findSwingAfterTime(String stock, String timeframe, LocalDateTime time) {
+        Optional<SwingEntity> swing = getRepository(stock, timeframe).findAfterTime(time);
+        return swing;
+    }
+
+    /**
+     * Возвращает следующий свинг с определенным направлением
+     *
+     * @param stock
+     * @param timeframe
+     * @param time
+     * @param direction
+     * @return
+     */
+    public Optional<SwingEntity> findSwingAfterTime(String stock, String timeframe, LocalDateTime time, SwingDirection direction) {
+        LocalDateTime afterTime = time;
+        for (int i = 0; i < 10; i++) {
+            Optional<SwingEntity> swing = getRepository(stock, timeframe).findAfterTime(afterTime);
+            if (swing.isEmpty()) {
+                break;
+            }
+            if (swing.get().getDirection().equals(direction.toBoolean())) {
+                return swing;
+            }
+            afterTime = swing.get().getTime();
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Конвертирует entity в свинг
+     *
+     * @param entity
+     * @param timeframe
+     * @return
+     */
     public SwingPoint convertEntityToSwing(SwingEntity entity, String timeframe) {
         return SwingPoint.builder()
-                .withDirection(entity.getDirection() ? SwingDirection.DOWN : SwingDirection.UP)
+                .withDirection(SwingDirection.byBoolean(entity.getDirection()))
                 .withPrice(BigDecimal.valueOf(entity.getPrice()))
                 .withSection(0)
                 .withTime(entity.getTime())
@@ -162,13 +235,14 @@ public class SwingsService {
         requireNonNull(stock, "stock");
         requireNonNull(timeframe, "timeframe");
         requireNonNull(time, "time");
-
         Timeframe currentTimeframe = Timeframe.valueOf(timeframe.toUpperCase());
-        LocalDateTime fromTime = time.minusMinutes(currentTimeframe.getValue());
-        LocalDateTime toTime = time.plusMinutes(currentTimeframe.getValue());
+        Timeframe upperTimeframe = currentTimeframe.getNext().get();
+        LocalDateTime fromTime = time.minusMinutes(upperTimeframe.getValue());
+        LocalDateTime toTime = time.plusMinutes(upperTimeframe.getValue());
         while (true) {
-            Optional<SwingEntity> swingEntity = getRepository(stock, currentTimeframe.getCode().toLowerCase())
-                    .findAllByTimeBetween(fromTime, toTime).stream()
+            List<SwingEntity> swingsCandidates = getRepository(stock, currentTimeframe.getCode().toLowerCase())
+                    .findAllByTimeBetween(fromTime, toTime);
+            Optional<SwingEntity> swingEntity = swingsCandidates.stream()
                     .filter(swing -> ((SwingEntity) swing).getDirection() == swingDirection)
                     .min(new Comparator() {
                         @Override
@@ -179,7 +253,8 @@ public class SwingsService {
                         }
                     });
             if (swingEntity.isPresent()) {
-                return swingEntity.map(se -> convertEntityToSwing(se, timeframe));
+                String tf = currentTimeframe.getCode();
+                return swingEntity.map(se -> convertEntityToSwing(se, tf));
             }
             if (currentTimeframe.getPrev().isEmpty()) {
                 break;
@@ -207,5 +282,11 @@ public class SwingsService {
     public Optional<SwingPoint> getSwingByTime(String stock, String timeframe, LocalDateTime time) {
         Optional<SwingEntity> swingPoint = Optional.ofNullable(getRepository(stock, timeframe).findByTime(time));
         return swingPoint.map(se -> convertEntityToSwing(se, timeframe));
+    }
+
+    public List<SwingEntity> getLatest(String stock,
+                                       String timeframe,
+                                       int count) {
+        return getRepository(stock, timeframe).getLatest(count);
     }
 }

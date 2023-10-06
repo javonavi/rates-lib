@@ -37,6 +37,11 @@ public class InMemorySwingRepository implements SwingRepository {
     }
 
     @Override
+    public Optional<SwingEntity> findAfterTime(LocalDateTime time) {
+        return Optional.ofNullable(tree.higherEntry(time)).map(Map.Entry::getValue);
+    }
+
+    @Override
     public List<SwingEntity> findAllByTimeBetween(LocalDateTime timeStart, LocalDateTime timeEnd) {
         if (timeStart.minusSeconds(timeStart.getSecond()).equals(timeEnd.minusSeconds(timeEnd.getSecond()))) {
             return Collections.singletonList(tree.get(timeStart));
@@ -57,5 +62,16 @@ public class InMemorySwingRepository implements SwingRepository {
     @Override
     public int count() {
         return tree.size();
+    }
+
+    @Override
+    public List<SwingEntity> getLatest(int count) {
+        List<SwingEntity> list = new ArrayList<>(tree.values());
+        if (count > list.size()) {
+            throw new RuntimeException("Count more than list size: count=" + count + "; listSize=" + list.size());
+        }
+        List<SwingEntity> result = list.subList(list.size() - count - 1, list.size() - 1);
+        Collections.reverse(result);
+        return result;
     }
 }

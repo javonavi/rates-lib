@@ -50,6 +50,9 @@ public class InMemoryRateRepository implements RateRepository {
         if (timeStart.minusSeconds(timeStart.getSecond()).equals(timeEnd.minusSeconds(timeEnd.getSecond()))) {
             return Collections.singletonList(tree.get(timeStart));
         }
+        if (!timeStart.isBefore(timeEnd)) {
+            throw new RuntimeException("Start must be greaten than end: timeStart=" + timeStart + "; timeEnd=" + timeEnd);
+        }
         return new ArrayList<>(tree.subMap(timeStart, true, timeEnd, true).values());
     }
 
@@ -99,5 +102,16 @@ public class InMemoryRateRepository implements RateRepository {
     @Override
     public void deleteAll() {
         tree.clear();
+    }
+
+    @Override
+    public List<RateEntity> getLatest(int count) {
+        List<RateEntity> list = new ArrayList<>(tree.values());
+        if (count > list.size()) {
+            throw new RuntimeException("Count more than list size: count=" + count + "; listSize=" + list.size());
+        }
+        List<RateEntity> result = list.subList(list.size() - count - 1, list.size() - 1);
+        Collections.reverse(result);
+        return result;
     }
 }

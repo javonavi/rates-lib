@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * @author javonavi
@@ -16,15 +17,16 @@ public class SwingHandlerContextService {
         this.repository = new HashMap<>();
     }
 
-    public synchronized void init(String stock, SwingHandlerContextRepository repository) {
+    public synchronized void init(String stock, Supplier<SwingHandlerContextRepository> repositorySupplier) {
         this.repository.put(stock, new HashMap<>());
-        this.repository.get(stock).put("m5", repository);
-        this.repository.get(stock).put("m15", repository);
-        this.repository.get(stock).put("h1", repository);
-        this.repository.get(stock).put("h4", repository);
-        this.repository.get(stock).put("d1", repository);
-        this.repository.get(stock).put("w1", repository);
-        this.repository.get(stock).put("mn1", repository);
+        this.repository.get(stock).put("m5", repositorySupplier.get());
+        this.repository.get(stock).put("m15", repositorySupplier.get());
+        this.repository.get(stock).put("h1", repositorySupplier.get());
+        this.repository.get(stock).put("h4", repositorySupplier.get());
+        this.repository.get(stock).put("d1", repositorySupplier.get());
+        this.repository.get(stock).put("w1", repositorySupplier.get());
+        this.repository.get(stock).put("mn1", repositorySupplier.get());
+        this.repository.get(stock).put("y1", repositorySupplier.get());
     }
 
     /**

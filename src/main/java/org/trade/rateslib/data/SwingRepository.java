@@ -15,6 +15,8 @@ public interface SwingRepository {
 
     Optional<SwingEntity> findBeforeTime(LocalDateTime time);
 
+    Optional<SwingEntity> findAfterTime(LocalDateTime time);
+
     List<SwingEntity> findAllByTimeBetween(LocalDateTime timeStart, LocalDateTime timeEnd);
 
     SwingEntity findByTime(LocalDateTime time);
@@ -22,4 +24,6 @@ public interface SwingRepository {
     void save(SwingEntity swingEntity);
 
     int count();
+
+    List<SwingEntity> getLatest(int count);
 }

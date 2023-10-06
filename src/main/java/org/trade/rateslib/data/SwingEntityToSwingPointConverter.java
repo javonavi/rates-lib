@@ -26,11 +26,21 @@ public class SwingEntityToSwingPointConverter {
                 swingEntity.getTime(),
                 nextSwingTime,
                 timeframe);
-                ratesService.getCountBetween(stock, timeframe, swingEntity.getTime(), nextSwingTime);
+        ratesService.getCountBetween(stock, timeframe, swingEntity.getTime(), nextSwingTime);
         return SwingPoint.builder()
                 .withDirection(SwingDirection.byBoolean(swingEntity.getDirection()))
                 .withLength(length)
                 .withLengthInBars(lengthInBars)
+                .withPrice(BigDecimal.valueOf(swingEntity.getPrice()))
+                .withSection(0)
+                .withTime(swingEntity.getTime())
+                .withTimeframe(timeframe)
+                .build();
+    }
+
+    public static SwingPoint simpleConvert(SwingEntity swingEntity, String timeframe) {
+        return SwingPoint.builder()
+                .withDirection(SwingDirection.byBoolean(swingEntity.getDirection()))
                 .withPrice(BigDecimal.valueOf(swingEntity.getPrice()))
                 .withSection(0)
                 .withTime(swingEntity.getTime())

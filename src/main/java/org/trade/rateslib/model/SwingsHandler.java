@@ -21,8 +21,8 @@ import static java.lang.Math.max;
  */
 public class SwingsHandler {
 
-    private static final Boolean UP = false;
-    private static final Boolean DOWN = true;
+    private static final Boolean UP = true;
+    private static final Boolean DOWN = false;
 
     private SwingHandlerContextEntity context;
     private final int reverseBarsCount;
@@ -88,6 +88,7 @@ public class SwingsHandler {
             if (UP == context.getCurrentDirection()
                     && Double.compare(rate.getLow().doubleValue(), context.getLastDownSwing()) < 0
                     && Double.compare(rate.getHigh().doubleValue(), context.getLastUpSwing()) < 0) {
+                correctNewLastWorkingPoint(DOWN, rate);
                 result = reverse(rate.getTime(), DOWN, "byLastSwing DOWN", ratesStorage);
                 context.setLastWorkingPoint(rate.getTime());
                 context.setCurrentLow(rate.getLow().doubleValue());
@@ -95,6 +96,7 @@ public class SwingsHandler {
             } else if (DOWN == context.getCurrentDirection()
                     && Double.compare(rate.getHigh().doubleValue(), context.getLastUpSwing()) > 0
                     && Double.compare(rate.getLow().doubleValue(), context.getLastDownSwing()) > 0) {
+                correctNewLastWorkingPoint(UP, rate);
                 result = reverse(rate.getTime(), UP, "byLastSwing UP", ratesStorage);
                 context.setLastWorkingPoint(rate.getTime());
                 context.setCurrentHigh(rate.getHigh().doubleValue());
@@ -282,17 +284,30 @@ public class SwingsHandler {
             }
         }
 
+        if (!alreadyReverse && DOWN == context.getCurrentDirection()
+                && Double.compare(rate.getHigh().doubleValue(), context.getLocalHigh()) > 0) {
+            Optional<RateEntity> prevRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount);
+            if (prevRate.isPresent()
+                && ratesStorage.getHighestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isPresent()
+                && ratesStorage.getLowestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isEmpty()) {
+                result = reverse(rate.getTime(), UP, "barsUpCount", ratesStorage);
+                alreadyReverse = true;
+            }
+        }
+
+        if (!alreadyReverse && UP == context.getCurrentDirection()
+                && Double.compare(rate.getLow().doubleValue(), context.getLocalLow()) < 0) {
+            Optional<RateEntity> prevRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount);
+            if (prevRate.isPresent()
+                    && ratesStorage.getLowestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isPresent()
+                    && ratesStorage.getHighestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isEmpty()) {
+                result = reverse(rate.getTime(), DOWN, "barsDownCount", ratesStorage);
+                alreadyReverse = true;
+            }
+        }
+
         context.setLocalHigh(rate.getHigh().doubleValue());
         context.setLocalLow(rate.getLow().doubleValue());
-
-        if (!alreadyReverse && DOWN == context.getCurrentDirection() &&
-                context.getBarsUpCount() >= reverseBarsCount) {
-            result = reverse(rate.getTime(), UP, "barsUpCount=" + context.getBarsUpCount(), ratesStorage);
-        }
-
-        if (!alreadyReverse && UP == context.getCurrentDirection() && context.getBarsDownCount() >= reverseBarsCount) {
-            result = reverse(rate.getTime(), DOWN, "barsDownCount=" + context.getBarsDownCount(), ratesStorage);
-        }
 
         if (!alreadyReverse && context.getCurrentDirection() != null && ratesStorage.getCount(stock, timeframe) >= reverseBarsCount + 1) {
             LocalDateTime reverseBarTime = ratesStorage.getLatestRate(stock, timeframe).get().getTime();
@@ -349,6 +364,17 @@ public class SwingsHandler {
         if (debug) System.out.println("result: " + result);
 
         return result;
+    }
+
+    private void correctNewLastWorkingPoint(boolean direction,
+                                                 Rate rate) {
+        if (context.getLastWorkingPoint() == null) {
+            return;
+        }
+        Optional<RateEntity> extremumRate = direction == UP
+            ? ratesStorage.getLowestRate(stock, timeframe, context.getLastWorkingPoint(), rate.getTime())
+            : ratesStorage.getHighestRate(stock, timeframe, context.getLastWorkingPoint(), rate.getTime());
+        extremumRate.map(RateEntity::getTime).ifPresent(t -> context.setLastWorkingPoint(t));
     }
 
     Optional<LocalDateTime> checkDownReverseByLastBars() {
@@ -500,12 +526,13 @@ public class SwingsHandler {
         RateEntity rate = ratesStorage.getRate(stock, timeframe, shift)
                 .orElseThrow();
         double price = direction == UP ? rate.getLow() : rate.getHigh();
-        log.info("Reverse: price={}, time={}, shift={}", price, context.getLastWorkingPoint(), shift);
+        log.debug("Reverse: price={}, time={}, shift={}, reason={}, reverseTime={}", price, context.getLastWorkingPoint(), shift,
+                cause, ratesStorage.getRate(stock, timeframe, 0).map(RateEntity::getTime).orElse(null));
         SwingPoint swing = SwingPoint.builder()
                 .withSection(0)
                 .withTime(context.getLastWorkingPoint())
                 .withTimeframe(timeframe)
-                .withDirection(direction ? SwingDirection.DOWN : SwingDirection.UP)
+                .withDirection(SwingDirection.byBoolean(direction))
                 .withPrice(BigDecimal.valueOf(price))
                 .build();
 
@@ -536,14 +563,12 @@ public class SwingsHandler {
             }
         }
 
-        log.info("Add swing: swing={}", swing);
+        log.debug("Add swing: swing={}", swing);
 
         context.setWaitingReverseCount(0);
         log.trace("newLastWorkingPoint={}", newLastWorkingPoint);
         context.setLastWorkingPoint(newLastWorkingPoint == null ? time : newLastWorkingPoint);
         context.setCurrentDirection(direction);
-        context.setBarsUpCount(0);
-        context.setBarsDownCount(0);
         context.setCurrentHigh(price);
         context.setCurrentLow(price);
         context.setGlobalHigh(context.getCurrentHigh());
