@@ -1,5 +1,6 @@
 package org.trade.rateslib.indicator;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MovingAverage {
@@ -13,6 +14,16 @@ public class MovingAverage {
             sum += values.get(i);
         }
         return sum / (toIndex - fromIndex + 1);
+    }
+
+    public List<Double> calc(List<Double> values,
+                             int length,
+                             MovingAverageType type) {
+        List<Double> result = new ArrayList<>();
+        for (int i = 0; i < values.size() - length; i++) {
+            result.add(calc(values, i, i + length - 1, type));
+        }
+        return result;
     }
 
     public static enum MovingAverageType {

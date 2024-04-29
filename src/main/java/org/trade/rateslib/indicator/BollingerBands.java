@@ -2,7 +2,7 @@ package org.trade.rateslib.indicator;
 
 import org.trade.rateslib.model.Rate;
 
-import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -20,6 +20,15 @@ public class BollingerBands {
         double sd = sqrt(IntStream.range(fromIndex, toIndex)
                 .mapToDouble(i -> pow(rates.get(i).getClose().doubleValue() - center, 2)).sum() / n);
         return new BollingerBandsResult(center + 2 * sd, center, center - 2 * sd);
+    }
+
+    public List<BollingerBandsResult> calc(List<Rate> rates,
+                                           int length) {
+        List<BollingerBandsResult> result = new ArrayList<>();
+        for (int i = 0; i < rates.size() - length; i++) {
+            result.add(calc(rates, i, i + length - 1));
+        }
+        return result;
     }
 
     public static class BollingerBandsResult {
