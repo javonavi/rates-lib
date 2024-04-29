@@ -5,9 +5,14 @@ import java.util.List;
 public class MovingAverage {
 
     public double calc(List<Double> values,
-                       int length,
+                       int fromIndex,
+                       int toIndex,
                        MovingAverageType type) {
-        return values.stream().mapToDouble(Double::doubleValue).sum() / length;
+        double sum = 0;
+        for (int i = fromIndex; i < toIndex; i++) {
+            sum += values.get(i);
+        }
+        return sum / (toIndex - fromIndex + 1);
     }
 
     public static enum MovingAverageType {
