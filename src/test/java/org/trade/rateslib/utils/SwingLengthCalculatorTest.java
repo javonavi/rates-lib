@@ -1,4 +1,4 @@
-package org.trade.rateslib.data.utils;
+package org.trade.rateslib.utils;
 
 import org.junit.jupiter.api.Test;
 import org.trade.rateslib.utils.SwingLengthCalculator;

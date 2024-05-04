@@ -14,7 +14,7 @@ public class BollingerBands {
     public BollingerBandsResult calc(List<Rate> rates,
                                      int fromIndex,
                                      int toIndex) {
-        double n = toIndex - fromIndex;
+        double n = toIndex - fromIndex + 1.;
         double center = IntStream.range(fromIndex, toIndex)
                 .mapToDouble(i -> rates.get(i).getClose().doubleValue()).sum() / n;
         double sd = sqrt(IntStream.range(fromIndex, toIndex)
