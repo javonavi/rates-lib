@@ -1,16 +1,9 @@
 package org.trade.rateslib.data;
 
 import org.trade.rateslib.model.Rate;
-import org.trade.rateslib.model.SwingPoint;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -25,16 +18,8 @@ public class RatesService {
         this.ratesRepository = new HashMap<>();
     }
 
-    public synchronized void init(String stock, Supplier<RateRepository> repositorySupplier) {
-        this.ratesRepository.put(stock, new HashMap<>());
-        this.ratesRepository.get(stock).put("m5", repositorySupplier.get());
-        this.ratesRepository.get(stock).put("m15", repositorySupplier.get());
-        this.ratesRepository.get(stock).put("h1", repositorySupplier.get());
-        this.ratesRepository.get(stock).put("h4", repositorySupplier.get());
-        this.ratesRepository.get(stock).put("d1", repositorySupplier.get());
-        this.ratesRepository.get(stock).put("w1", repositorySupplier.get());
-        this.ratesRepository.get(stock).put("mn1", repositorySupplier.get());
-        this.ratesRepository.get(stock).put("y1", repositorySupplier.get());
+    public synchronized void init(String stock, Map<String, RateRepository> rateRepositoryMap) {
+        this.ratesRepository.put(stock, rateRepositoryMap);
     }
 
     public List<RateEntity> mapRates(Collection<Rate> rates, String stock, String timeframe) {
