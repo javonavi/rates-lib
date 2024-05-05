@@ -59,7 +59,7 @@ public class FileStorageRateRepository implements RateRepository {
 
     @Override
     public RateEntity getByIndex(int index) {
-        throw new RuntimeException("Unsupported method");
+        throw new RuntimeException("Unsupported method: getByIndex");
     }
 
     @Override
@@ -83,12 +83,12 @@ public class FileStorageRateRepository implements RateRepository {
 
     @Override
     public RateEntity findFirstByTimeLessThanOrderByTimeDesc(LocalDateTime time) {
-        throw new RuntimeException("Unsupported method");
+        throw new RuntimeException("Unsupported method: findFirstByTimeLessThanOrderByTimeDesc");
     }
 
     @Override
     public List<RateEntity> findAllByTimeGreaterThanEqualOrderByTimeAsc(LocalDateTime time) {
-        throw new RuntimeException("Unsupported method");
+        throw new RuntimeException("Unsupported method: findAllByTimeGreaterThanEqualOrderByTimeAsc");
     }
 
     @Override
@@ -118,12 +118,12 @@ public class FileStorageRateRepository implements RateRepository {
 
     @Override
     public int count() {
-        throw new RuntimeException("Unsupported method");
+        throw new RuntimeException("Unsupported method: count");
     }
 
     @Override
     public void deleteAll() {
-        throw new RuntimeException("Unsupported method");
+        throw new RuntimeException("Unsupported method: deleteAll");
     }
 
     @Override
