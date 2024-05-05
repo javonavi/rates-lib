@@ -88,6 +88,19 @@ public class InMemoryRateRepositoryTest {
         assertEquals(repository.findAllByTimeGreaterThanEqualOrderByTimeAsc(LocalDateTime.parse("1999-10-01T00:00:00")).size(), 4);
     }
 
+    @Test
+    public void getLatest() {
+        InMemoryRateRepository repository = init(List.of(
+                LocalDateTime.parse("1999-01-01T00:00:00"),
+                LocalDateTime.parse("2000-01-01T00:00:00"),
+                LocalDateTime.parse("1999-10-01T00:00:00"),
+                LocalDateTime.parse("2001-01-01T00:00:00"),
+                LocalDateTime.parse("2002-01-01T00:00:00")
+        ));
+        assertEquals(repository.getLatest(LocalDateTime.parse("2001-01-01T00:00:00"), 2).get(0).getTime(), LocalDateTime.parse("2000-01-01T00:00:00"));
+        assertEquals(repository.getLatest(LocalDateTime.parse("2001-01-01T00:00:00"), 2).get(1).getTime(), LocalDateTime.parse("1999-10-01T00:00:00"));
+    }
+
     private InMemoryRateRepository init(List<LocalDateTime> times) {
         InMemoryRateRepository repository = new InMemoryRateRepository();
         for (LocalDateTime time : times) {

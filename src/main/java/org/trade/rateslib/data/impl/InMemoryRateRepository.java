@@ -114,4 +114,18 @@ public class InMemoryRateRepository implements RateRepository {
         Collections.reverse(result);
         return result;
     }
+
+    @Override
+    public List<RateEntity> getLatest(LocalDateTime beforeTime, int count) {
+        List<RateEntity> list = new ArrayList<>(tree.values());
+        int i2 = list.size();
+        while (--i2 >= 0 && !list.get(i2).getTime().isBefore(beforeTime));
+        int i1 = i2 - count + 1;
+        if (i1 < 0) {
+            i1 = 0;
+        }
+        List<RateEntity> result = list.subList(i1, i2 + 1);
+        Collections.reverse(result);
+        return result;
+    }
 }

@@ -109,6 +109,12 @@ public class Logger {
                 .replaceFirst("\\{\\}", toString(o1)));
     }
 
+    public void warn(String message, Object o1, Object o2) {
+        log(Level.WARNING, message
+                .replaceFirst("\\{\\}", toString(o1))
+                .replaceFirst("\\{\\}", toString(o2)));
+    }
+
     public void warn(String message, Object o1, Object o2, Object o3) {
         log(Level.WARNING, message
                 .replaceFirst("\\{\\}", toString(o1))

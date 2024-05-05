@@ -34,4 +34,7 @@ public interface RateRepository {
     void deleteAll();
 
     List<RateEntity> getLatest(int count);
+
+    List<RateEntity> getLatest(LocalDateTime beforeTime,
+                               int count);
 }
