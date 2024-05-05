@@ -59,7 +59,8 @@ public class FileStorageRateRepository implements RateRepository {
 
     @Override
     public RateEntity getByIndex(int index) {
-        return getLatest(index + 1).get(0);
+        List<RateEntity> list = getLatest(index + 1);
+        return list.isEmpty() ? null : list.get(0);
     }
 
     @Override
