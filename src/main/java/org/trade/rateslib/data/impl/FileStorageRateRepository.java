@@ -59,7 +59,7 @@ public class FileStorageRateRepository implements RateRepository {
 
     @Override
     public RateEntity getByIndex(int index) {
-        throw new RuntimeException("Unsupported method: getByIndex");
+        return getLatest(index + 1).get(0);
     }
 
     @Override
