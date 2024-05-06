@@ -8,12 +8,14 @@ import org.trade.rateslib.utils.TimeUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -70,7 +72,7 @@ public class FileStorageRateRepository implements RateRepository {
         result.addAll(loadFile(block).stream().filter(r -> !r.getTime().isAfter(timeEnd)).collect(Collectors.toList()));
         LocalDateTime start = TimeUtils.plus(block.getEnd(), timeframe);
         while (!start.isAfter(timeEnd)) {
-            block = getBlockByTime(timeStart);
+            block = getBlockByTime(start);
             result.addAll(loadFile(block).stream().filter(r -> !r.getTime().isAfter(timeEnd)).collect(Collectors.toList()));
             start = TimeUtils.plus(block.getEnd(), timeframe);
         }
@@ -100,12 +102,22 @@ public class FileStorageRateRepository implements RateRepository {
             throw new RuntimeException("Rate already exists: rate=" + rateEntity);
         }
         List<RateEntity> result = new ArrayList<>();
+        result.addAll(rates);
+        result.add(rateEntity);
         saveFile(block, result);
     }
 
     @Override
     public void update(RateEntity rateEntity) {
-
+        StorageBlock block = getBlockByTime(rateEntity.getTime());
+        Map<LocalDateTime, RateEntity> rates = loadFile(block).stream().collect(Collectors.toMap(
+             RateEntity::getTime,
+             Function.identity()
+        ));
+        rates.remove(rateEntity.getTime());
+        rates.put(rateEntity.getTime(), rateEntity);
+        List<RateEntity> result = new ArrayList<>(rates.values());
+        saveFile(block, result);
     }
 
     @Override
@@ -151,7 +163,7 @@ public class FileStorageRateRepository implements RateRepository {
                 .collect(Collectors.toList());
     }
 
-    private StorageBlock getBlockByTime(LocalDateTime time) {
+    StorageBlock getBlockByTime(LocalDateTime time) {
         Path base = directory.resolve(stock).resolve(timeframe.getCode());
         int year = time.getYear();
         int month = time.getMonthValue();
@@ -215,7 +227,7 @@ public class FileStorageRateRepository implements RateRepository {
     }
 
     private StorageBlock getBlockBefore(StorageBlock block) {
-        return getBlockByTime(block.getStart().minusMinutes(1));
+        return getBlockByTime(TimeUtils.minus(block.getStart(), timeframe));
     }
 
     private List<String> getLatestFileRecursive(Path base) {
@@ -269,7 +281,7 @@ public class FileStorageRateRepository implements RateRepository {
                 .collect(Collectors.toList());
     }
 
-    private static class StorageBlock {
+    static class StorageBlock {
         private final Path path;
         private final LocalDateTime start;
         private final LocalDateTime end;
@@ -325,7 +337,8 @@ public class FileStorageRateRepository implements RateRepository {
         }
     }
 
-    private List<RateEntity> loadFile(StorageBlock block) {
+    List<RateEntity> loadFile(StorageBlock block) {
+        log.debug("loadFile(): block={}", block);
         if (!block.getPath().toFile().exists()) {
             return Collections.emptyList();
         }
@@ -353,10 +366,20 @@ public class FileStorageRateRepository implements RateRepository {
         }
     }
 
-    private void saveFile(StorageBlock block, List<RateEntity> rates) {
+    void saveFile(StorageBlock block, List<RateEntity> rates) {
+        log.debug("saveFile(): block={}, rates.size={}", block, rates.size());
         Map<LocalDateTime, RateEntity> ratesToSave = rates.stream().collect(Collectors.toMap(
                 RateEntity::getTime,
                 Function.identity()));
+        if (!block.getPath().toFile().exists()) {
+            try {
+                Files.createDirectories(block.getPath().getParent());
+                block.getPath().toFile().createNewFile();
+            } catch (IOException e) {
+                log.warn("Error on create file: block={}", block, e);
+                throw new RuntimeException(e);
+            }
+        }
         try (FileOutputStream fos = new FileOutputStream(block.getPath().toFile())) {
             ByteBuffer bb = ByteBuffer.allocate(block.getSize() * 4 * 8);
             for (LocalDateTime start = block.getStart(); !start.isAfter(block.getEnd()); start = TimeUtils.plus(start, timeframe)) {

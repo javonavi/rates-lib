@@ -20,8 +20,6 @@ public class TimeUtils {
     }
 
     public static long calcDuration(Timeframe timeframe, LocalDateTime time1, LocalDateTime time2) {
-        //System.out.println("time1=" + time1);
-        //System.out.println("time2=" + time2);
         return calcDuration(timeframe, ZonedDateTime.of(time1, ZoneId.systemDefault()), ZonedDateTime.of(time2, ZoneId.systemDefault()));
     }
 

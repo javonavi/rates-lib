@@ -79,6 +79,10 @@ public class SwingsService {
         getRepository(stock, timeframe).save(entity);
     }
 
+    public void save(String stock, String timeframe, SwingEntity swingEntity) {
+        getRepository(stock, timeframe).save(swingEntity);
+    }
+
     public SwingEntity createClass(String stock, String timeframe) {
         return new SwingEntity();
     }

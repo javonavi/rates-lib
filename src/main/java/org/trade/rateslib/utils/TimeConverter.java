@@ -26,11 +26,8 @@ public class TimeConverter {
         if (fromTimeframe.getValue() == toTimeframe.getValue()) {
             return time;
         }
-        //System.out.println("toTimeframe=" + toTimeframe);
         Timeframe curTimeframe = fromTimeframe;
-        //System.out.println("curTimeframe=" + curTimeframe);
         LocalDateTime curTime = time;
-        //System.out.println("curTime=" + curTime);
         while (curTimeframe.getValue() < toTimeframe.getValue()) {
             curTime = convertToNextTimeframe(curTimeframe, curTime);
             if (curTime == null) {

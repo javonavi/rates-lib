@@ -72,7 +72,6 @@ public class SwingLengthCalculator {
     public static double calcTimeBetween(String timeframe,
                                          LocalDateTime fromTime,
                                          LocalDateTime toTime) {
-        //System.out.println("fromTime=" + fromTime + "; toTime=" + toTime);
         Duration duration = Duration.between(fromTime, toTime);
         switch (timeframe.toLowerCase()) {
             case "m5":

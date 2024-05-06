@@ -1,17 +1,16 @@
 package org.trade.rateslib.model;
 
+import org.slf4j.Logger;
 import org.trade.rateslib.data.RateEntity;
 import org.trade.rateslib.data.RatesService;
 import org.trade.rateslib.data.SwingEntity;
 import org.trade.rateslib.data.SwingHandlerContextEntity;
 import org.trade.rateslib.data.SwingsService;
-import org.trade.rateslib.utils.Logger;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Level;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
@@ -38,7 +37,7 @@ public class SwingsHandler {
                          SwingHandlerContextEntity swingHandlerContextEntity,
                          RatesService ratesStorage,
                          SwingsService swingsStorage,
-                         Level loggerLevel) {
+                         Logger logger) {
         this.timeframe = timeframe;
         this.stock = stock;
         this.context = swingHandlerContextEntity;
@@ -46,7 +45,7 @@ public class SwingsHandler {
         this.context.setReverseBarsCount(reverseBarsCount);
         this.ratesStorage = ratesStorage;
         this.swingsStorage = swingsStorage;
-        this.log = Logger.getLogger(loggerLevel);
+        this.log = logger;
     }
 
     public Integer getReverseBarsCount() {
@@ -288,8 +287,8 @@ public class SwingsHandler {
                 && Double.compare(rate.getHigh().doubleValue(), context.getLocalHigh()) > 0) {
             Optional<RateEntity> prevRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount);
             if (prevRate.isPresent()
-                && ratesStorage.getHighestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isPresent()
-                && ratesStorage.getLowestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isEmpty()) {
+                    && ratesStorage.getHighestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isPresent()
+                    && ratesStorage.getLowestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isEmpty()) {
                 result = reverse(rate.getTime(), UP, "barsUpCount", ratesStorage);
                 alreadyReverse = true;
             }
@@ -367,18 +366,19 @@ public class SwingsHandler {
     }
 
     private void correctNewLastWorkingPoint(boolean direction,
-                                                 Rate rate) {
+                                            Rate rate) {
         if (context.getLastWorkingPoint() == null) {
             return;
         }
         Optional<RateEntity> extremumRate = direction == UP
-            ? ratesStorage.getLowestRate(stock, timeframe, context.getLastWorkingPoint(), rate.getTime())
-            : ratesStorage.getHighestRate(stock, timeframe, context.getLastWorkingPoint(), rate.getTime());
+                ? ratesStorage.getLowestRate(stock, timeframe, context.getLastWorkingPoint(), rate.getTime())
+                : ratesStorage.getHighestRate(stock, timeframe, context.getLastWorkingPoint(), rate.getTime());
         extremumRate.map(RateEntity::getTime).ifPresent(t -> context.setLastWorkingPoint(t));
     }
 
     Optional<LocalDateTime> checkDownReverseByLastBars() {
-        if (ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 10).size() < reverseBarsCount + 1) return Optional.empty();
+        if (ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 10).size() < reverseBarsCount + 1)
+            return Optional.empty();
 
         RateEntity checkedRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount)
                 .orElseThrow();
@@ -405,7 +405,8 @@ public class SwingsHandler {
     }
 
     Optional<LocalDateTime> checkUpReverseByLastBars() {
-        if (ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 10).size() < reverseBarsCount + 1) return Optional.empty();
+        if (ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 10).size() < reverseBarsCount + 1)
+            return Optional.empty();
 
         RateEntity checkedRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount)
                 .orElseThrow();
