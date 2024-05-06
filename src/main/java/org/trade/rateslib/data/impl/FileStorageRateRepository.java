@@ -1,8 +1,11 @@
 package org.trade.rateslib.data.impl;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.trade.rateslib.data.RateEntity;
 import org.trade.rateslib.data.RateRepository;
+import org.trade.rateslib.data.RatesService;
 import org.trade.rateslib.model.Timeframe;
 import org.trade.rateslib.utils.TimeUtils;
 
@@ -15,13 +18,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,6 +41,7 @@ public class FileStorageRateRepository implements RateRepository {
     private final String stock;
     private final Timeframe timeframe;
     private final Logger log;
+    private final LoadingCache<StorageBlock, List<RateEntity>> cache;
 
     public FileStorageRateRepository(Path directory,
                                      String stock,
@@ -47,6 +51,10 @@ public class FileStorageRateRepository implements RateRepository {
         this.stock = stock;
         this.timeframe = timeframe;
         this.log = log;
+        this.cache = Caffeine.newBuilder()
+                .maximumSize(100)
+                .expireAfterWrite(1, TimeUnit.MINUTES)
+                .build(this::loadFile);
     }
 
     @Override
@@ -367,6 +375,7 @@ public class FileStorageRateRepository implements RateRepository {
     }
 
     void saveFile(StorageBlock block, List<RateEntity> rates) {
+        cache.invalidate(block);
         log.debug("saveFile(): block={}, rates.size={}", block, rates.size());
         Map<LocalDateTime, RateEntity> ratesToSave = rates.stream().collect(Collectors.toMap(
                 RateEntity::getTime,
