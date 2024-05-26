@@ -2,6 +2,7 @@ package org.trade.rateslib.utils;
 
 import org.trade.rateslib.model.Timeframe;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -152,13 +153,13 @@ public class TimeUtils {
             case D1:
                 return plus(time.truncatedTo(ChronoUnit.DAYS), timeframe);
             case W1:
-                return plus(time.truncatedTo(ChronoUnit.WEEKS), timeframe);
+                return plus(time.with(DayOfWeek.MONDAY).truncatedTo(ChronoUnit.DAYS), timeframe);
             case MN1:
-                return plus(time.truncatedTo(ChronoUnit.MONTHS), timeframe);
+                return plus(time.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS), timeframe);
             case MN3:
-                return plus(time.truncatedTo(ChronoUnit.MONTHS).minusMonths((time.getMonthValue() - 1) % 3), timeframe);
+                return plus(time.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS).minusMonths((time.getMonthValue() - 1) % 3), timeframe);
             case Y1:
-                return plus(time.truncatedTo(ChronoUnit.YEARS), timeframe);
+                return plus(time.withDayOfYear(1).truncatedTo(ChronoUnit.DAYS), timeframe);
 
             default:
                 throw new RuntimeException("Unhandled timeframe on getLatestFinishedBarTime(): " + timeframe);
