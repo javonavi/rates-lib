@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -181,6 +182,16 @@ public class RatesService {
     public List<RateEntity> getLatest(String stock,
                                       String timeframe,
                                       int count) {
+        return getRepository(stock, timeframe).getLatest(count);
+    }
+
+    public List<RateEntity> getLatest(String stock,
+                                      String timeframe,
+                                      int count,
+                                      LocalDateTime beforeTime) {
+        if (nonNull(beforeTime)) {
+            return getRepository(stock, timeframe).getLatest(count);
+        }
         return getRepository(stock, timeframe).getLatest(count);
     }
 }
