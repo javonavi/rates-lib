@@ -139,4 +139,30 @@ public class TimeUtils {
         }
     }
 
+    public static LocalDateTime getLatestFinishedBarTime(LocalDateTime time, Timeframe timeframe) {
+        switch (timeframe) {
+            case M5:
+                return plus(time.minusMinutes(time.getMinute() % 5).truncatedTo(ChronoUnit.MINUTES), timeframe);
+            case M15:
+                return plus(time.minusMinutes(time.getMinute() % 15).truncatedTo(ChronoUnit.MINUTES), timeframe);
+            case H1:
+                return plus(time.truncatedTo(ChronoUnit.MINUTES), timeframe);
+            case H4:
+                return plus(time.truncatedTo(ChronoUnit.MINUTES).minusHours(time.getHour() % 4), timeframe);
+            case D1:
+                return plus(time.truncatedTo(ChronoUnit.DAYS), timeframe);
+            case W1:
+                return plus(time.truncatedTo(ChronoUnit.WEEKS), timeframe);
+            case MN1:
+                return plus(time.truncatedTo(ChronoUnit.MONTHS), timeframe);
+            case MN3:
+                return plus(time.truncatedTo(ChronoUnit.MONTHS).minusMonths((time.getMonthValue() - 1) % 3), timeframe);
+            case Y1:
+                return plus(time.truncatedTo(ChronoUnit.YEARS), timeframe);
+
+            default:
+                throw new RuntimeException("Unhandled timeframe on getLatestFinishedBarTime(): " + timeframe);
+        }
+
+    }
 }
