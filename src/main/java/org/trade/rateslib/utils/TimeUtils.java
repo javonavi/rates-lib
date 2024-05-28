@@ -143,23 +143,23 @@ public class TimeUtils {
     public static LocalDateTime getLatestFinishedBarTime(LocalDateTime time, Timeframe timeframe) {
         switch (timeframe) {
             case M5:
-                return plus(time.minusMinutes(time.getMinute() % 5).truncatedTo(ChronoUnit.MINUTES), timeframe);
+                return time.minusMinutes(time.getMinute() % 5).truncatedTo(ChronoUnit.MINUTES);
             case M15:
-                return plus(time.minusMinutes(time.getMinute() % 15).truncatedTo(ChronoUnit.MINUTES), timeframe);
+                return time.minusMinutes(time.getMinute() % 15).truncatedTo(ChronoUnit.MINUTES);
             case H1:
-                return plus(time.truncatedTo(ChronoUnit.MINUTES), timeframe);
+                return time.truncatedTo(ChronoUnit.HOURS);
             case H4:
-                return plus(time.truncatedTo(ChronoUnit.MINUTES).minusHours(time.getHour() % 4), timeframe);
+                return time.truncatedTo(ChronoUnit.HOURS).minusHours(time.getHour() % 4);
             case D1:
-                return plus(time.truncatedTo(ChronoUnit.DAYS), timeframe);
+                return time.truncatedTo(ChronoUnit.DAYS);
             case W1:
-                return plus(time.with(DayOfWeek.MONDAY).truncatedTo(ChronoUnit.DAYS), timeframe);
+                return time.with(DayOfWeek.MONDAY).truncatedTo(ChronoUnit.DAYS);
             case MN1:
-                return plus(time.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS), timeframe);
+                return time.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
             case MN3:
-                return plus(time.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS).minusMonths((time.getMonthValue() - 1) % 3), timeframe);
+                return time.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS).minusMonths((time.getMonthValue() - 1) % 3);
             case Y1:
-                return plus(time.withDayOfYear(1).truncatedTo(ChronoUnit.DAYS), timeframe);
+                return time.withDayOfYear(1).truncatedTo(ChronoUnit.DAYS);
 
             default:
                 throw new RuntimeException("Unhandled timeframe on getLatestFinishedBarTime(): " + timeframe);
