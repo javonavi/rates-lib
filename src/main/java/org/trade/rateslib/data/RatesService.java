@@ -192,6 +192,6 @@ public class RatesService {
         if (nonNull(beforeTime)) {
             return getRepository(stock, timeframe).getLatest(count);
         }
-        return getRepository(stock, timeframe).getLatest(count);
+        return getRepository(stock, timeframe).getLatest(beforeTime, count);
     }
 }
