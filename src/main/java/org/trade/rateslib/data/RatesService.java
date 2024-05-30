@@ -190,8 +190,8 @@ public class RatesService {
                                       int count,
                                       LocalDateTime beforeTime) {
         if (nonNull(beforeTime)) {
-            return getRepository(stock, timeframe).getLatest(count);
+            return getRepository(stock, timeframe).getLatest(beforeTime, count);
         }
-        return getRepository(stock, timeframe).getLatest(beforeTime, count);
+        return getRepository(stock, timeframe).getLatest(count);
     }
 }
