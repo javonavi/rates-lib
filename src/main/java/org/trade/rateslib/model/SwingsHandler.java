@@ -444,6 +444,9 @@ public class SwingsHandler {
     }
 
     private Optional<LocalDateTime> lastBarsGrowUp(RatesService ratesStorage) {
+        if (ratesStorage.getCount(stock, timeframe) < reverseBarsCount * 2 + 10) {
+            return Optional.empty();
+        }
         int barsCount = ratesStorage.getLatest(stock, timeframe, reverseBarsCount * 2 + 10).size();
         if (barsCount <= reverseBarsCount) return Optional.empty();
         RateEntity bar = ratesStorage.getRate(stock, timeframe, 0)
@@ -473,6 +476,9 @@ public class SwingsHandler {
     }
 
     private Optional<LocalDateTime> lastBarsGrowDown(RatesService ratesStorage) {
+        if (ratesStorage.getCount(stock, timeframe) < reverseBarsCount * 2 + 10) {
+            return Optional.empty();
+        }
         int barsCount = ratesStorage.getLatest(stock, timeframe, reverseBarsCount * 2 + 10).size();
         if (barsCount <= reverseBarsCount) return Optional.empty();
         RateEntity bar = ratesStorage.getRate(stock, timeframe, 0)
