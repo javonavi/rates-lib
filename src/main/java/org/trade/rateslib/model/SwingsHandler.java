@@ -308,7 +308,10 @@ public class SwingsHandler {
         context.setLocalHigh(rate.getHigh().doubleValue());
         context.setLocalLow(rate.getLow().doubleValue());
 
-        if (!alreadyReverse && context.getCurrentDirection() != null && ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 10).size() >= reverseBarsCount + 1) {
+        if (!alreadyReverse
+                && context.getCurrentDirection() != null
+                && ratesStorage.getCount(stock, timeframe) >= reverseBarsCount + 10
+                && ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 10).size() >= reverseBarsCount + 1) {
             LocalDateTime reverseBarTime = ratesStorage.getLatestRate(stock, timeframe).get().getTime();
             if (UP == context.getCurrentDirection() &&
                     (context.getLastWorkingPoint() != null && !context.getLastWorkingPoint().isAfter(reverseBarTime))) {
