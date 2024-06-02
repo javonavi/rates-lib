@@ -310,7 +310,7 @@ public class SwingsHandler {
 
         if (!alreadyReverse
                 && context.getCurrentDirection() != null
-                && ratesStorage.getCount(stock, timeframe) >= reverseBarsCount + 10
+                && ratesStorage.getCount(stock, timeframe) > reverseBarsCount + 10
                 && ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 10).size() >= reverseBarsCount + 1) {
             LocalDateTime reverseBarTime = ratesStorage.getLatestRate(stock, timeframe).get().getTime();
             if (UP == context.getCurrentDirection() &&
@@ -449,7 +449,7 @@ public class SwingsHandler {
     }
 
     private Optional<LocalDateTime> lastBarsGrowUp(RatesService ratesStorage) {
-        if (ratesStorage.getCount(stock, timeframe) < reverseBarsCount * 2 + 10) {
+        if (ratesStorage.getCount(stock, timeframe) <= reverseBarsCount * 2 + 10) {
             return Optional.empty();
         }
         int barsCount = ratesStorage.getLatest(stock, timeframe, reverseBarsCount * 2 + 10).size();
@@ -481,7 +481,7 @@ public class SwingsHandler {
     }
 
     private Optional<LocalDateTime> lastBarsGrowDown(RatesService ratesStorage) {
-        if (ratesStorage.getCount(stock, timeframe) < reverseBarsCount * 2 + 10) {
+        if (ratesStorage.getCount(stock, timeframe) <= reverseBarsCount * 2 + 10) {
             return Optional.empty();
         }
         int barsCount = ratesStorage.getLatest(stock, timeframe, reverseBarsCount * 2 + 10).size();
