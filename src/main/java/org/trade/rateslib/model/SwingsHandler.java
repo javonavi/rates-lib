@@ -380,8 +380,9 @@ public class SwingsHandler {
     }
 
     Optional<LocalDateTime> checkDownReverseByLastBars() {
-        if (ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 10).size() < reverseBarsCount + 1)
+        if (ratesStorage.getCount(stock, timeframe) < reverseBarsCount + 1) {
             return Optional.empty();
+        }
 
         RateEntity checkedRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount)
                 .orElseThrow();
@@ -408,8 +409,9 @@ public class SwingsHandler {
     }
 
     Optional<LocalDateTime> checkUpReverseByLastBars() {
-        if (ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 10).size() < reverseBarsCount + 1)
+        if (ratesStorage.getCount(stock, timeframe) < reverseBarsCount + 1) {
             return Optional.empty();
+        }
 
         RateEntity checkedRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount)
                 .orElseThrow();
