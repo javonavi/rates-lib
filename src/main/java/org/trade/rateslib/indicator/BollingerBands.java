@@ -4,22 +4,25 @@ import org.trade.rateslib.model.Rate;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
-
-import static java.lang.Math.pow;
-import static java.lang.Math.sqrt;
 
 public class BollingerBands {
 
     public BollingerBandsResult calc(List<Rate> rates,
                                      int fromIndex,
                                      int toIndex) {
-        double n = toIndex - fromIndex + 1.;
-        double center = IntStream.range(fromIndex, toIndex)
-                .mapToDouble(i -> rates.get(i).getClose().doubleValue()).sum() / n;
-        double sd = sqrt(IntStream.range(fromIndex, toIndex)
-                .mapToDouble(i -> pow(rates.get(i).getClose().doubleValue() - center, 2)).sum() / n);
-        return new BollingerBandsResult(center + 2 * sd, center, center - 2 * sd);
+        double n = (double)(toIndex - fromIndex) + 1.0;
+        double center = 0.;
+        for (int i = fromIndex; i <= toIndex; i++) {
+            center += rates.get(i).getClose().doubleValue();
+        }
+        center /= n;
+        double sd = 0.;
+        for (int i = fromIndex; i <= toIndex; i++) {
+            sd += Math.pow(rates.get(i).getClose().doubleValue() - center, 2.0);
+        }
+        sd /= n;
+        sd = Math.sqrt(sd);
+        return new BollingerBands.BollingerBandsResult(center + 2.0 * sd, center, center - 2.0 * sd);
     }
 
     public List<BollingerBandsResult> calc(List<Rate> rates,
