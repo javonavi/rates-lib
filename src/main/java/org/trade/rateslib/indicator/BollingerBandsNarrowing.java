@@ -3,11 +3,8 @@ package org.trade.rateslib.indicator;
 import org.trade.rateslib.model.Rate;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static java.lang.Math.min;
 
 public class BollingerBandsNarrowing {
 
@@ -20,25 +17,31 @@ public class BollingerBandsNarrowing {
     }
 
     public List<Boolean> check(List<Rate> rates,
-                               int avgBandsWindowCount,
-                               int maBandsSmallPeriod,
-                               int maBandsLargePeriod) {
-        List<Double> bands = bollingerBands.calc(rates, avgBandsWindowCount).stream().map(bb -> bb.getUpper() - bb.getLower()).collect(Collectors.toList());
-        if (bands.size() < maBandsLargePeriod) {
-            return Collections.emptyList();
-        }
-
-        List<Double> bandsMaLarge = movingAverage.calc(bands, maBandsLargePeriod, MovingAverage.MovingAverageType.SMA);
-        List<Double> bandsMaSmall = movingAverage.calc(bands, maBandsSmallPeriod, MovingAverage.MovingAverageType.SMA);
-
-        int checkingBars = min(bandsMaLarge.size(), bandsMaSmall.size());
-
+                               int bollingerPeriod,
+                               int maPeriod) {
+        List<Double> bollingers = bollingerBands.calc(rates, bollingerPeriod).stream().map((bb) -> {
+                    return bb.getUpper() - bb.getLower();
+                })
+                .map(i -> Math.log(i))
+                .collect(Collectors.toList());
+        List<Double> ma = movingAverage.calc(bollingers, maPeriod, MovingAverage.MovingAverageType.SMA);
+        int startMa = bollingers.size() - ma.size();
+        int maIndex = 0;
         List<Boolean> result = new ArrayList<>();
-        for (int i = 1; i <= checkingBars; i++) {
-            result.add(bandsMaLarge.get(bandsMaLarge.size() - i) < bandsMaSmall.get(bandsMaSmall.size() - i));
+        int resultIndex = 0;
+        while (resultIndex < rates.size() - bollingers.size()) {
+            result.add(Boolean.FALSE);
+            resultIndex++;
         }
-
-        Collections.reverse(result);
+        for (int i = 0; i < bollingers.size(); i++) {
+            Double maVal = null;
+            if (i >= startMa) {
+                maVal = ma.get(maIndex);
+                maIndex++;
+            }
+            result.add(maVal != null && bollingers.get(i) < maVal);
+            resultIndex++;
+        }
         return result;
     }
 
