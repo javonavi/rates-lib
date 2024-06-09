@@ -10,7 +10,7 @@ public class MovingAverage {
                        int toIndex,
                        MovingAverageType type) {
         double sum = 0;
-        for (int i = fromIndex; i < toIndex; i++) {
+        for (int i = fromIndex; i <= toIndex; i++) {
             sum += values.get(i);
         }
         return sum / (toIndex - fromIndex + 1);
@@ -20,7 +20,7 @@ public class MovingAverage {
                              int length,
                              MovingAverageType type) {
         List<Double> result = new ArrayList<>();
-        for (int i = 0; i < values.size() - length; i++) {
+        for (int i = 0; i < values.size() - length + 1; i++) {
             result.add(calc(values, i, i + length - 1, type));
         }
         return result;

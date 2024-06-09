@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import static java.lang.Math.max;
+
 /**
  * @author javonavi
  */
@@ -67,10 +69,7 @@ public class InMemorySwingRepository implements SwingRepository {
     @Override
     public List<SwingEntity> getLatest(int count) {
         List<SwingEntity> list = new ArrayList<>(tree.values());
-        if (count > list.size()) {
-            throw new RuntimeException("Count more than list size: count=" + count + "; listSize=" + list.size());
-        }
-        List<SwingEntity> result = list.subList(list.size() - count - 1, list.size() - 1);
+        List<SwingEntity> result = list.subList(max(list.size() - count - 1, 0), list.size() - 1);
         Collections.reverse(result);
         return result;
     }

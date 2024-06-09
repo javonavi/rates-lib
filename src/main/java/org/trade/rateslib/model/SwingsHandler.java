@@ -310,7 +310,6 @@ public class SwingsHandler {
 
         if (!alreadyReverse
                 && context.getCurrentDirection() != null
-                && ratesStorage.getCount(stock, timeframe) > reverseBarsCount + 10
                 && ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 10).size() >= reverseBarsCount + 1) {
             LocalDateTime reverseBarTime = ratesStorage.getLatestRate(stock, timeframe).get().getTime();
             if (UP == context.getCurrentDirection() &&
@@ -380,7 +379,7 @@ public class SwingsHandler {
     }
 
     Optional<LocalDateTime> checkDownReverseByLastBars() {
-        if (ratesStorage.getCount(stock, timeframe) < reverseBarsCount + 1) {
+        if (ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 1).size() < reverseBarsCount + 1) {
             return Optional.empty();
         }
 
@@ -409,7 +408,7 @@ public class SwingsHandler {
     }
 
     Optional<LocalDateTime> checkUpReverseByLastBars() {
-        if (ratesStorage.getCount(stock, timeframe) < reverseBarsCount + 1) {
+        if (ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 1).size() < reverseBarsCount + 1) {
             return Optional.empty();
         }
 
@@ -449,11 +448,8 @@ public class SwingsHandler {
     }
 
     private Optional<LocalDateTime> lastBarsGrowUp(RatesService ratesStorage) {
-        if (ratesStorage.getCount(stock, timeframe) <= reverseBarsCount * 2 + 10) {
-            return Optional.empty();
-        }
-        int barsCount = ratesStorage.getLatest(stock, timeframe, reverseBarsCount * 2 + 10).size();
-        if (barsCount <= reverseBarsCount) return Optional.empty();
+        int barsCount = ratesStorage.getLatest(stock, timeframe, reverseBarsCount * 2 + 11).size();
+        if (barsCount <= reverseBarsCount * 2 + 10) return Optional.empty();
         RateEntity bar = ratesStorage.getRate(stock, timeframe, 0)
                 .orElseThrow();
         double high = bar.getHigh();
@@ -472,7 +468,7 @@ public class SwingsHandler {
             bar = prevBar;
         }
         if (bar.getLow() >= low) return Optional.empty();
-        for (int i = reverseBarsCount + 1; i < reverseBarsCount * 2 && i < barsCount; i++) {
+        for (int i = reverseBarsCount + 1; i < reverseBarsCount * 2 && i < barsCount - 1; i++) {
             RateEntity prevBar = ratesStorage.getRate(stock, timeframe, i)
                     .orElseThrow();
             if (prevBar.getHigh() >= high) return Optional.empty();
@@ -481,11 +477,8 @@ public class SwingsHandler {
     }
 
     private Optional<LocalDateTime> lastBarsGrowDown(RatesService ratesStorage) {
-        if (ratesStorage.getCount(stock, timeframe) <= reverseBarsCount * 2 + 10) {
-            return Optional.empty();
-        }
-        int barsCount = ratesStorage.getLatest(stock, timeframe, reverseBarsCount * 2 + 10).size();
-        if (barsCount <= reverseBarsCount) return Optional.empty();
+        int barsCount = ratesStorage.getLatest(stock, timeframe, reverseBarsCount * 2 + 11).size();
+        if (barsCount <= reverseBarsCount * 2 + 10) return Optional.empty();
         RateEntity bar = ratesStorage.getRate(stock, timeframe, 0)
                 .orElseThrow();
         double low = bar.getLow();
@@ -504,7 +497,7 @@ public class SwingsHandler {
             bar = prevBar;
         }
         if (bar.getHigh() <= high) return Optional.empty();
-        for (int i = reverseBarsCount + 1; i < reverseBarsCount * 2 && i < barsCount; i++) {
+        for (int i = reverseBarsCount + 1; i < reverseBarsCount * 2 && i < barsCount - 1; i++) {
             RateEntity prevBar = ratesStorage.getRate(stock, timeframe, i)
                     .orElseThrow();
             if (prevBar.getLow() <= low) return Optional.empty();

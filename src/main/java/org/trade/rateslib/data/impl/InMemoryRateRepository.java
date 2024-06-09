@@ -11,6 +11,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import static java.lang.Math.max;
+
 /**
  * @author javonavi
  */
@@ -107,10 +109,7 @@ public class InMemoryRateRepository implements RateRepository {
     @Override
     public List<RateEntity> getLatest(int count) {
         List<RateEntity> list = new ArrayList<>(tree.values());
-        if (count >= list.size()) {
-            throw new RuntimeException("Count more than list size: count=" + count + "; listSize=" + list.size());
-        }
-        List<RateEntity> result = list.subList(list.size() - count - 1, list.size() - 1);
+        List<RateEntity> result = list.subList(max(list.size() - count - 1, 0), list.size() - 1);
         Collections.reverse(result);
         return result;
     }
@@ -119,7 +118,7 @@ public class InMemoryRateRepository implements RateRepository {
     public List<RateEntity> getLatest(LocalDateTime beforeTime, int count) {
         List<RateEntity> list = new ArrayList<>(tree.values());
         int i2 = list.size();
-        while (--i2 >= 0 && !list.get(i2).getTime().isBefore(beforeTime));
+        while (--i2 >= 0 && !list.get(i2).getTime().isBefore(beforeTime)) ;
         int i1 = i2 - count + 1;
         if (i1 < 0) {
             i1 = 0;

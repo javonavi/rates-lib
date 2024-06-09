@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.trade.rateslib.data.RateEntity;
 import org.trade.rateslib.data.RateRepository;
-import org.trade.rateslib.data.RatesService;
 import org.trade.rateslib.model.Timeframe;
 import org.trade.rateslib.utils.TimeUtils;
 
