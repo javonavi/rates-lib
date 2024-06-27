@@ -260,8 +260,11 @@ public class FileStorageRateRepository implements RateRepository {
             return Optional.empty();
         }
         return Stream.of(files)
-                .sorted(Comparator.comparing(File::getName).reversed())
-                .findFirst();
+                .map(File::getName)
+                .map(Integer::parseInt)
+                .max(Integer::compare)
+                .map(i -> base.resolve(i.toString()))
+                .map(Path::toFile);
     }
 
 
