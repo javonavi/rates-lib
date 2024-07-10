@@ -73,4 +73,11 @@ public class InMemorySwingRepository implements SwingRepository {
         Collections.reverse(result);
         return result;
     }
+
+    @Override
+    public Optional<Integer> getShift(LocalDateTime time) {
+        List<LocalDateTime> list = new ArrayList<>(tree.keySet());
+        int index = list.indexOf(time);
+        return index == -1 ? Optional.empty() : Optional.of(index);
+    }
 }

@@ -26,4 +26,6 @@ public interface SwingRepository {
     int count();
 
     List<SwingEntity> getLatest(int count);
+
+    Optional<Integer> getShift(LocalDateTime time);
 }

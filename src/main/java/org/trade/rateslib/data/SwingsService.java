@@ -280,4 +280,10 @@ public class SwingsService {
                                        int count) {
         return getRepository(stock, timeframe).getLatest(count);
     }
+
+    public Optional<Integer> getShift(String stock,
+                                      String timeframe,
+                                      LocalDateTime time) {
+        return getRepository(stock, timeframe).getShift(time);
+    }
 }
