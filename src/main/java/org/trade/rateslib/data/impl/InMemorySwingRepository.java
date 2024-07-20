@@ -82,4 +82,14 @@ public class InMemorySwingRepository implements SwingRepository {
         int index = list.indexOf(time);
         return index == -1 ? Optional.empty() : Optional.of(index);
     }
+
+    @Override
+    public SwingEntity getLowest() {
+        return tree.values().stream().min(Comparator.comparing(SwingEntity::getPrice)).get();
+    }
+
+    @Override
+    public SwingEntity getHighest() {
+        return tree.values().stream().max(Comparator.comparing(SwingEntity::getPrice)).get();
+    }
 }

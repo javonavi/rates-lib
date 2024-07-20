@@ -28,4 +28,8 @@ public interface SwingRepository {
     List<SwingEntity> getLatest(int count);
 
     Optional<Integer> getShift(LocalDateTime time);
+
+    SwingEntity getLowest();
+
+    SwingEntity getHighest();
 }

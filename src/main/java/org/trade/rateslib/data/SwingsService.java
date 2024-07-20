@@ -286,4 +286,14 @@ public class SwingsService {
                                       LocalDateTime time) {
         return getRepository(stock, timeframe).getShift(time);
     }
+
+    public SwingPoint getLowest(String stock,
+                                String timeframe) {
+        return convertEntityToSwing(getRepository(stock, timeframe).getLowest(), timeframe);
+    }
+
+    public SwingPoint getHighest(String stock,
+                                String timeframe) {
+        return convertEntityToSwing(getRepository(stock, timeframe).getHighest(), timeframe);
+    }
 }
