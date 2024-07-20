@@ -2,6 +2,7 @@ package org.trade.rateslib.data.impl;
 
 import org.trade.rateslib.data.SwingEntity;
 import org.trade.rateslib.data.SwingRepository;
+import org.trade.rateslib.model.SwingPoint;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.max;
 
@@ -92,4 +94,43 @@ public class InMemorySwingRepository implements SwingRepository {
     public SwingEntity getHighest() {
         return tree.values().stream().max(Comparator.comparing(SwingEntity::getPrice)).get();
     }
+
+    @Override
+    public List<SwingEntity> findNearbySwings(SwingEntity swing,
+                                             int steps) {
+        List<SwingEntity> result = new ArrayList<>();
+        SwingEntity high = swing;
+        SwingEntity low = swing;
+        for (int i = 0; i < steps; i++) {
+            if (high != null) {
+                high = tree.higherEntry(high.getTime()) == null
+                        ? null
+                        : tree.higherEntry(high.getTime()).getValue();
+            }
+            if (high != null) {
+                high = tree.higherEntry(high.getTime()) == null
+                        ? null
+                        : tree.higherEntry(high.getTime()).getValue();
+            }
+            if (high != null) {
+                result.add(high);
+            }
+
+            if (low != null) {
+                low = tree.lowerEntry(low.getTime()) == null
+                        ? null
+                        : tree.lowerEntry(low.getTime()).getValue();
+            }
+            if (low != null) {
+                low = tree.lowerEntry(low.getTime()) == null
+                        ? null
+                        : tree.lowerEntry(low.getTime()).getValue();
+            }
+            if (low != null) {
+                result.add(low);
+            }
+        }
+        return result.stream().sorted(Comparator.comparing(SwingEntity::getTime)).collect(Collectors.toList());
+    }
+
 }

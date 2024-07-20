@@ -1,5 +1,7 @@
 package org.trade.rateslib.model;
 
+import org.trade.rateslib.data.SwingEntity;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -104,6 +106,16 @@ public class SwingPoint implements Serializable {
         result = 31 * result + price.hashCode();
         result = 31 * result + direction.hashCode();
         return result;
+    }
+
+    public SwingEntity getEntity() {
+        SwingEntity swing = new SwingEntity();
+        swing.setDirection(getDirection().toBoolean());
+        swing.setTime(getTime());
+        swing.setPrice(getPrice().doubleValue());
+        swing.setLength(getLength());
+        swing.setLengthInBars(getLengthInBars());
+        return swing;
     }
 
     public static Builder builder() {

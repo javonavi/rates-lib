@@ -32,4 +32,14 @@ public interface SwingRepository {
     SwingEntity getLowest();
 
     SwingEntity getHighest();
+
+    /**
+     * Ищет соседние свинги того же направления
+     *
+     * @param swing Свинг, для которого ищем соседей
+     * @param steps Сколько шагов на поиск
+     * @return Соседние свинги, отсортированные по времени
+     */
+    List<SwingEntity> findNearbySwings(SwingEntity swing,
+                                       int steps);
 }

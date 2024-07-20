@@ -296,4 +296,12 @@ public class SwingsService {
                                 String timeframe) {
         return convertEntityToSwing(getRepository(stock, timeframe).getHighest(), timeframe);
     }
+
+    public List<SwingPoint> findNearbySwings(String stock,
+                                             SwingPoint swing,
+                                             int steps) {
+        return getRepository(stock, swing.getTimeframe()).findNearbySwings(swing.getEntity(), steps).stream()
+                .map(s -> convertEntityToSwing(s, swing.getTimeframe()))
+                .collect(Collectors.toList());
+    }
 }
