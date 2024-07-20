@@ -7,7 +7,12 @@ import org.trade.rateslib.utils.TimeframeProvider;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.abs;
@@ -293,7 +298,7 @@ public class SwingsService {
     }
 
     public SwingPoint getHighest(String stock,
-                                String timeframe) {
+                                 String timeframe) {
         return convertEntityToSwing(getRepository(stock, timeframe).getHighest(), timeframe);
     }
 
@@ -303,5 +308,13 @@ public class SwingsService {
         return getRepository(stock, swing.getTimeframe()).findNearbySwings(swing.getEntity(), steps).stream()
                 .map(s -> convertEntityToSwing(s, swing.getTimeframe()))
                 .collect(Collectors.toList());
+    }
+
+    public List<SwingPoint> findNearbySwingsWithMainSwing(String stock,
+                                                          SwingPoint swing,
+                                                          int steps) {
+        List<SwingPoint> result = new ArrayList<>(findNearbySwings(stock, swing, steps));
+        result.add(swing);
+        return result.stream().sorted(Comparator.comparing(SwingPoint::getTime)).collect(Collectors.toList());
     }
 }
