@@ -76,7 +76,7 @@ public class InMemoryRateRepository implements RateRepository {
 
     @Override
     public int countByTimeBetween(LocalDateTime timeStart, LocalDateTime timeEnd) {
-        if (createIndexCashedCollection) {
+        if (createIndexCashedCollection && indexCashedCollection.containsKey(timeEnd) && indexCashedCollection.containsKey(timeStart)) {
             return indexCashedCollection.get(timeEnd) - indexCashedCollection.get(timeStart) + 1;
         }
         return findAllByTimeBetween(timeStart, timeEnd).size();
