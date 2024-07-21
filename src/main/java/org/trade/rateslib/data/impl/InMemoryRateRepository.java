@@ -6,7 +6,9 @@ import org.trade.rateslib.data.RateRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -19,6 +21,20 @@ import static java.lang.Math.max;
 public class InMemoryRateRepository implements RateRepository {
 
     private final TreeMap<LocalDateTime, RateEntity> tree = new TreeMap<>();
+    /**
+     * Включает режим генерации кешированной последовательности индексов
+     * Она используется для ускорения работы некоторых методов сервиса
+     */
+    private final boolean createIndexCashedCollection;
+    private final Map<LocalDateTime, Integer> indexCashedCollection = new HashMap<>();
+
+    public InMemoryRateRepository() {
+        this(false);
+    }
+
+    public InMemoryRateRepository(boolean createIndexCashedCollection) {
+        this.createIndexCashedCollection = createIndexCashedCollection;
+    }
 
     @Override
     public RateEntity findFirstByOrderByTimeDesc() {
@@ -60,6 +76,9 @@ public class InMemoryRateRepository implements RateRepository {
 
     @Override
     public int countByTimeBetween(LocalDateTime timeStart, LocalDateTime timeEnd) {
+        if (createIndexCashedCollection) {
+            return indexCashedCollection.get(timeEnd) - indexCashedCollection.get(timeStart) + 1;
+        }
         return findAllByTimeBetween(timeStart, timeEnd).size();
     }
 
@@ -84,6 +103,9 @@ public class InMemoryRateRepository implements RateRepository {
     @Override
     public void insert(RateEntity rateEntity) {
         tree.put(rateEntity.getTime(), rateEntity);
+        if (createIndexCashedCollection) {
+            indexCashedCollection.put(rateEntity.getTime(), tree.size());
+        }
     }
 
     @Override

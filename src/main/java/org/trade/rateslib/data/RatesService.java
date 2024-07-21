@@ -3,7 +3,12 @@ package org.trade.rateslib.data;
 import org.trade.rateslib.model.Rate;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
