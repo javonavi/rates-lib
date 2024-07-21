@@ -113,8 +113,6 @@ public class SwingPoint implements Serializable {
         swing.setDirection(getDirection().toBoolean());
         swing.setTime(getTime());
         swing.setPrice(getPrice().doubleValue());
-        swing.setLength(getLength());
-        swing.setLengthInBars(getLengthInBars());
         return swing;
     }
 
