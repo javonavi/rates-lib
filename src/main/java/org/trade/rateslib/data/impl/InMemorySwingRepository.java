@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,18 +23,28 @@ import static java.lang.Math.max;
 public class InMemorySwingRepository implements SwingRepository {
 
     private final TreeMap<LocalDateTime, SwingEntity> tree = new TreeMap<>();
+    private final Map<LocalDateTime, Integer> numberMap = new HashMap<>();
+    private final List<LocalDateTime> keysList = new ArrayList<>();
 
     @Override
     public void deleteByTimeGreaterThan(LocalDateTime time) {
         while (tree.size() > 0 && tree.lastKey().isAfter(time)) {
-            tree.remove(tree.pollLastEntry().getKey());
+            LocalDateTime key = tree.pollLastEntry().getKey();
+            tree.remove(key);
+            numberMap.remove(key);
+        }
+        while (keysList.get(keysList.size()-1).isAfter(time)) {
+            keysList.remove(keysList.size()-1);
         }
     }
 
     @Override
     public SwingEntity getByIndex(int index) {
-        List<SwingEntity> list = new ArrayList<>(tree.values());
-        return list.get(list.size() - index - 1);
+        if (index >= keysList.size()) {
+            return null;
+        }
+        int ind = keysList.size() - index - 1;
+        return tree.get(keysList.get(ind));
     }
 
     @Override
@@ -62,6 +73,8 @@ public class InMemorySwingRepository implements SwingRepository {
     @Override
     public void save(SwingEntity swingEntity) {
         tree.put(swingEntity.getTime(), swingEntity);
+        numberMap.put(swingEntity.getTime(), numberMap.size());
+        keysList.add(swingEntity.getTime());
     }
 
     @Override
@@ -71,18 +84,30 @@ public class InMemorySwingRepository implements SwingRepository {
 
     @Override
     public List<SwingEntity> getLatest(int count) {
-        List<SwingEntity> list = new ArrayList<>(tree.values());
-        List<SwingEntity> result = list.subList(max(list.size() - count - 1, 0), list.size() - 1);
-        Collections.reverse(result);
+        if (tree.isEmpty()) {
+            return Collections.emptyList();
+        }
+        int cnt = count;
+        if (tree.size() < cnt) {
+            cnt = tree.size();
+        }
+        Map.Entry<LocalDateTime, SwingEntity> entry = tree.lastEntry();
+        List<SwingEntity> result = new ArrayList<>();
+        result.add(entry.getValue());
+        for (int i = 1; i < cnt; i++) {
+            entry = tree.lowerEntry(entry.getKey());
+            result.add(entry.getValue());
+        }
         return result;
     }
 
     @Override
     public Optional<Integer> getShift(LocalDateTime time) {
-        List<LocalDateTime> list = new ArrayList<>(tree.keySet());
-        Collections.sort(list, Collections.reverseOrder());
-        int index = list.indexOf(time);
-        return index == -1 ? Optional.empty() : Optional.of(index);
+        Integer number = numberMap.get(time);
+        if (number == null) {
+            return Optional.empty();
+        }
+        return Optional.of(numberMap.size() - number - 1);
     }
 
     @Override

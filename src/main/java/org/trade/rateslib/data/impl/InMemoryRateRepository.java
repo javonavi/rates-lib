@@ -150,4 +150,10 @@ public class InMemoryRateRepository implements RateRepository {
         Collections.reverse(result);
         return result;
     }
+
+    @Override
+    public Optional<RateEntity> getFirstRate() {
+        return Optional.ofNullable(tree.firstEntry()).map(Map.Entry::getValue);
+    }
+
 }

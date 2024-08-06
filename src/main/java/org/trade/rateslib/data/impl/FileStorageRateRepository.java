@@ -291,6 +291,57 @@ public class FileStorageRateRepository implements RateRepository {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Optional<RateEntity> getFirstRate() {
+        Path base = directory.resolve(stock).resolve(timeframe.getCode());
+        switch (timeframe) {
+            case MN1:
+                var path0 = findFirstFile(base);
+                if (path0.isEmpty()) return Optional.empty();
+                LocalDateTime time0 = getFirstWeekDayOfYear(Integer.parseInt(path0.get().getFileName().toString()));
+                return loadFile(getBlockByTime(time0)).stream().min(Comparator.comparing(RateEntity::getTime)).stream().findFirst();
+            case W1:
+                var path1 = findFirstFile(base);
+                if (path1.isEmpty()) return Optional.empty();
+                LocalDateTime time1 = LocalDateTime.of(Integer.parseInt(path1.get().getFileName().toString()), 1, 1, 0, 0);
+                return loadFile(getBlockByTime(time1)).stream().min(Comparator.comparing(RateEntity::getTime)).stream().findFirst();
+            case D1:
+                var path2 = findFirstFile(base);
+                if (path2.isEmpty()) return Optional.empty();
+                var path3 = findFirstFile(path2.get());
+                if (path3.isEmpty()) return Optional.empty();
+                LocalDateTime time2 = LocalDateTime.of(
+                        Integer.parseInt(path2.get().getFileName().toString()),
+                        Integer.parseInt(path3.get().getFileName().toString()), 1, 0, 0);
+                return loadFile(getBlockByTime(time2)).stream().min(Comparator.comparing(RateEntity::getTime)).stream().findFirst();
+            case H1:
+                var path4 = findFirstFile(base);
+                if (path4.isEmpty()) return Optional.empty();
+                var path5 = findFirstFile(path4.get());
+                if (path5.isEmpty()) return Optional.empty();
+                var path6 = findFirstFile(path5.get());
+                if (path6.isEmpty()) return Optional.empty();
+                LocalDateTime time3 = LocalDateTime.of(
+                        Integer.parseInt(path4.get().getFileName().toString()),
+                        Integer.parseInt(path5.get().getFileName().toString()),
+                        Integer.parseInt(path6.get().getFileName().toString()), 0, 0);
+                return loadFile(getBlockByTime(time3)).stream().min(Comparator.comparing(RateEntity::getTime)).stream().findFirst();
+
+            default:
+                throw new RuntimeException("Unexpected timeframe: " + timeframe);
+
+        }
+    }
+
+    private Optional<Path> findFirstFile(Path path) {
+        try (var stream = Files.list(path)) {
+            return stream.sorted().findFirst();
+        } catch (IOException e) {
+            log.warn("Error on list directory: path={}", path);
+            return Optional.empty();
+        }
+    }
+
     static class StorageBlock {
         private final Path path;
         private final LocalDateTime start;

@@ -37,4 +37,6 @@ public interface RateRepository {
 
     List<RateEntity> getLatest(LocalDateTime beforeTime,
                                int count);
+
+    Optional<RateEntity> getFirstRate();
 }
