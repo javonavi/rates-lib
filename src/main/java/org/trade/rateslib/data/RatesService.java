@@ -199,4 +199,9 @@ public class RatesService {
         }
         return getRepository(stock, timeframe).getLatest(count);
     }
+
+    public Optional<RateEntity> getFirstRate(String stock,
+                                             String timeframe) {
+        return getRepository(stock, timeframe).getFirstRate();
+    }
 }
