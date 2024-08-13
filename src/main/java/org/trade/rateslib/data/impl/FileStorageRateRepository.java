@@ -224,11 +224,20 @@ public class FileStorageRateRepository implements RateRepository {
             return Optional.empty();
         }
         if (l.size() == 1) {
-            return Optional.of(getBlockByTime(LocalDateTime.of(Integer.parseInt(l.get(0)), 1, 1, 0, 0)));
+            StorageBlock block1 = getBlockByTime(LocalDateTime.of(Integer.parseInt(l.get(0)), 1, 1, 0, 0));
+            return Optional.of(block1.getPath().toFile().length() == 0
+                    ? getBlockBefore(block1)
+                    : block1);
         } else if (l.size() == 2) {
-            return Optional.of(getBlockByTime(LocalDateTime.of(Integer.parseInt(l.get(0)), Integer.parseInt(l.get(1)), 1, 0, 0)));
+            StorageBlock block2 = getBlockByTime(LocalDateTime.of(Integer.parseInt(l.get(0)), Integer.parseInt(l.get(1)), 1, 0, 0));
+            return Optional.of(block2.getPath().toFile().length() == 0
+                    ? getBlockBefore(block2)
+                    : block2);
         } else if (l.size() == 3) {
-            return Optional.of(getBlockByTime(LocalDateTime.of(Integer.parseInt(l.get(0)), Integer.parseInt(l.get(1)), Integer.parseInt(l.get(2)), 0, 0)));
+            StorageBlock block3 = getBlockByTime(LocalDateTime.of(Integer.parseInt(l.get(0)), Integer.parseInt(l.get(1)), Integer.parseInt(l.get(2)), 0, 0));
+            return Optional.of(block3.getPath().toFile().length() == 0
+                    ? getBlockBefore(block3)
+                    : block3);
         }
         return Optional.empty();
     }
