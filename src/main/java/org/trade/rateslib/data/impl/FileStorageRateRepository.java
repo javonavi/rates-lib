@@ -76,7 +76,7 @@ public class FileStorageRateRepository implements RateRepository {
     public List<RateEntity> findAllByTimeBetween(LocalDateTime timeStart, LocalDateTime timeEnd) {
         List<RateEntity> result = new ArrayList<>();
         StorageBlock block = getBlockByTime(timeStart);
-        result.addAll(loadFile(block).stream().filter(r -> !r.getTime().isAfter(timeEnd)).collect(Collectors.toList()));
+        result.addAll(loadFile(block).stream().filter(r -> !r.getTime().isBefore(timeStart)).collect(Collectors.toList()));
         LocalDateTime start = TimeUtils.plus(block.getEnd(), timeframe);
         while (!start.isAfter(timeEnd)) {
             block = getBlockByTime(start);

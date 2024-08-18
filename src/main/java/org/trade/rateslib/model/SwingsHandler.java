@@ -375,7 +375,14 @@ public class SwingsHandler {
         Optional<RateEntity> extremumRate = direction == UP
                 ? ratesStorage.getLowestRate(stock, timeframe, context.getLastWorkingPoint(), rate.getTime())
                 : ratesStorage.getHighestRate(stock, timeframe, context.getLastWorkingPoint(), rate.getTime());
-        extremumRate.map(RateEntity::getTime).ifPresent(t -> context.setLastWorkingPoint(t));
+        extremumRate.ifPresent(rt -> {
+            context.setLastWorkingPoint(rt.getTime());
+            if (direction == UP) {
+                context.setLastWorkingPrice(rt.getLow().doubleValue());
+            } else {
+                context.setLastWorkingPrice(rt.getHigh().doubleValue());
+            }
+        });
     }
 
     Optional<LocalDateTime> checkDownReverseByLastBars() {
@@ -437,13 +444,16 @@ public class SwingsHandler {
     }
 
     private void setLastWorkingPrice(Rate rate) {
-        log.debug("Set last working price");
         if (context.getLastWorkingPrice() == null) {
-            context.setLastWorkingPrice(context.getCurrentDirection() == UP ? rate.getHigh().doubleValue() : rate.getLow().doubleValue());
+            double price = context.getCurrentDirection() == UP ? rate.getHigh().doubleValue() : rate.getLow().doubleValue();
+            context.setLastWorkingPrice(price);
+            log.debug("Set last working price: {}", price);
         } else if (context.getCurrentDirection() == UP && Double.compare(rate.getHigh().doubleValue(), context.getLastWorkingPrice()) > 0) {
             context.setLastWorkingPrice(rate.getHigh().doubleValue());
+            log.debug("Set last working price: {}", rate.getHigh());
         } else if (context.getCurrentDirection() == DOWN && Double.compare(rate.getLow().doubleValue(), context.getLastWorkingPrice()) < 0) {
             context.setLastWorkingPrice(rate.getLow().doubleValue());
+            log.debug("Set last working price: {}", rate.getLow());
         }
     }
 
@@ -531,6 +541,9 @@ public class SwingsHandler {
         RateEntity rate = ratesStorage.getRate(stock, timeframe, shift)
                 .orElseThrow();
         double price = direction == UP ? rate.getLow() : rate.getHigh();
+        if (context.getLastWorkingPrice() != null) {
+            price = context.getLastWorkingPrice();
+        }
         log.debug("Reverse: price={}, time={}, shift={}, reason={}, reverseTime={}", price, context.getLastWorkingPoint(), shift,
                 cause, ratesStorage.getRate(stock, timeframe, 0).map(RateEntity::getTime).orElse(null));
         SwingPoint swing = SwingPoint.builder()
@@ -555,13 +568,19 @@ public class SwingsHandler {
             //debug(time, "nextShift=" + TimeToString(iTime(symbol, period, nextShift)) + "; shift=" + TimeToString(iTime(symbol, period, shift)));
             if (direction == UP) {
                 ratesStorage.getHighestRate(stock, timeframe, prevLastWorkingPoint, time)
-                        .ifPresent(rt -> context.setLastWorkingPoint(rt.getTime()));
+                        .ifPresent(rt -> {
+                            context.setLastWorkingPoint(rt.getTime());
+                            context.setLastWorkingPrice(rt.getHigh().doubleValue());
+                        });
                 //lastWorkingPoint = iTime(symbol, period, iHighest(symbol, TFMigrate(period), MODE_HIGH, shift - nextShift, nextShift));
                 //debug(time, "1: " + IntegerToString(iHighest(symbol, TFMigrate(period), MODE_HIGH, shift - nextShift, nextShift)));
                 //debug(time, "1: " + TimeToString(iTime(symbol, period, 50)));
             } else {
                 ratesStorage.getLowestRate(stock, timeframe, prevLastWorkingPoint, time)
-                        .ifPresent(rt -> context.setLastWorkingPoint(rt.getTime()));
+                        .ifPresent(rt -> {
+                            context.setLastWorkingPoint(rt.getTime());
+                            context.setLastWorkingPrice(rt.getLow().doubleValue());
+                        });
                 //lastWorkingPoint = iTime(symbol, period, iLowest(symbol, TFMigrate(period), MODE_LOW, shift - nextShift, nextShift));
                 //debug(time, "2: " + IntegerToString(iLowest(symbol, TFMigrate(period), MODE_LOW, shift - nextShift, nextShift)));
                 //debug(time, "2: " + TimeToString(iTime(symbol, period, 50)));
