@@ -37,6 +37,28 @@ public class SwingHandlerContextEntity {
     private Double lastWorkingPrice;
 
 
+    @Override
+    public SwingHandlerContextEntity clone() {
+        SwingHandlerContextEntity entity = new SwingHandlerContextEntity();
+
+        entity.setTime(entity.getTime());
+        entity.setLocalHigh(entity.getLocalHigh());
+        entity.setLocalLow(entity.getLocalLow());
+        entity.setCurrentHigh(entity.getCurrentHigh());
+        entity.setCurrentLow(entity.getCurrentLow());
+        entity.setGlobalHigh(entity.getGlobalHigh());
+        entity.setGlobalLow(entity.getGlobalLow());
+        entity.setCurrentDirection(entity.getCurrentDirection());
+        entity.setReverseBarsCount(entity.getReverseBarsCount());
+        entity.setWaitingReverseCount(entity.getWaitingReverseCount());
+        entity.setLastWorkingPoint(entity.getLastWorkingPoint());
+        entity.setLastDownSwing(entity.getLastDownSwing());
+        entity.setLastUpSwing(entity.getLastUpSwing());
+        entity.setLastWorkingPrice(entity.getLastWorkingPrice());
+
+        return entity;
+    }
+
     public LocalDateTime getTime() {
         return time;
     }

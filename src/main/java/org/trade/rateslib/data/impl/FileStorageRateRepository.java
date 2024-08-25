@@ -19,10 +19,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -74,13 +76,19 @@ public class FileStorageRateRepository implements RateRepository {
 
     @Override
     public List<RateEntity> findAllByTimeBetween(LocalDateTime timeStart, LocalDateTime timeEnd) {
-        List<RateEntity> result = new ArrayList<>();
+        Set<RateEntity> result = new HashSet<>();
         StorageBlock block = getBlockByTime(timeStart);
-        result.addAll(loadFile(block).stream().filter(r -> !r.getTime().isBefore(timeStart)).collect(Collectors.toList()));
+        result.addAll(loadFile(block).stream()
+                .filter(r -> !r.getTime().isBefore(timeStart))
+                .filter(r -> !r.getTime().isAfter(timeEnd))
+                .collect(Collectors.toSet()));
         LocalDateTime start = TimeUtils.plus(block.getEnd(), timeframe);
         while (!start.isAfter(timeEnd)) {
             block = getBlockByTime(start);
-            result.addAll(loadFile(block).stream().filter(r -> !r.getTime().isAfter(timeEnd)).collect(Collectors.toList()));
+            result.addAll(loadFile(block).stream()
+                    .filter(r -> !r.getTime().isAfter(timeEnd))
+                    .filter(r -> !r.getTime().isBefore(timeStart))
+                    .collect(Collectors.toSet()));
             start = TimeUtils.plus(block.getEnd(), timeframe);
         }
         return result.stream().sorted(Comparator.comparing(RateEntity::getTime)).collect(Collectors.toList());
@@ -282,15 +290,24 @@ public class FileStorageRateRepository implements RateRepository {
         List<RateEntity> result = new ArrayList<>();
         StorageBlock block = getBlockByTime(beforeTime);
         result.addAll(loadFile(block));
+        int emptyBlocksCount = 0;
         while (result.size() < limit) {
             block = getBlockBefore(block);
             if (!block.getPath().toFile().exists()) {
-                break;
+                emptyBlocksCount++;
+                if (result.isEmpty() && emptyBlocksCount <= 100) {
+                    continue;
+                } else if (emptyBlocksCount <= 7) {
+                    continue;
+                } else {
+                    break;
+                }
             }
             List<RateEntity> loadedRates = loadFile(block);
             if (loadedRates.isEmpty()) {
                 break;
             }
+            emptyBlocksCount = 0;
             result.addAll(loadedRates);
         }
         return result.stream()

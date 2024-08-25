@@ -54,9 +54,6 @@ public class SwingPoint implements Serializable {
     }
 
     public Double getLength() {
-        if (Objects.isNull(length)) {
-            throw new RuntimeException("Swing length wasn't initialized: swing=" + toString());
-        }
         return length;
     }
 
@@ -65,9 +62,6 @@ public class SwingPoint implements Serializable {
     }
 
     public Double getLengthInBars() {
-        if (Objects.isNull(lengthInBars)) {
-            throw new RuntimeException("Swing lengthInBars wasn't initialized: swing=" + toString());
-        }
         return lengthInBars;
     }
 
