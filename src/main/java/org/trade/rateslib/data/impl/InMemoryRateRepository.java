@@ -6,6 +6,7 @@ import org.trade.rateslib.data.RateRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +70,7 @@ public class InMemoryRateRepository implements RateRepository {
             return Collections.singletonList(tree.get(timeStart));
         }
         if (!timeStart.isBefore(timeEnd)) {
-            throw new RuntimeException("Start must be greaten than end: timeStart=" + timeStart + "; timeEnd=" + timeEnd);
+            throw new RuntimeException("End must be greaten than start: timeStart=" + timeStart + "; timeEnd=" + timeEnd);
         }
         return new ArrayList<>(tree.subMap(timeStart, true, timeEnd, true).values());
     }
@@ -154,6 +155,28 @@ public class InMemoryRateRepository implements RateRepository {
     @Override
     public Optional<RateEntity> getFirstRate() {
         return Optional.ofNullable(tree.firstEntry()).map(Map.Entry::getValue);
+    }
+
+    public Optional<RateEntity> getHighestRate(LocalDateTime fromTime, LocalDateTime toTime) {
+        return findAllByTimeBetween(fromTime, toTime)
+                .stream().max(Comparator.comparing(RateEntity::getHigh));
+    }
+
+    public Optional<RateEntity> getLowestRate(LocalDateTime fromTime, LocalDateTime toTime) {
+        return findAllByTimeBetween(fromTime, toTime)
+                .stream().min(Comparator.comparing(RateEntity::getLow));
+    }
+
+    public int getShift(LocalDateTime time) {
+        return countByTimeGreaterThanEqual(time) - 1;
+    }
+
+    public Optional<RateEntity> getRate(int index) {
+        return Optional.ofNullable(getByIndex(index));
+    }
+
+    public Optional<RateEntity> getLatestRate() {
+        return getRate(0);
     }
 
 }

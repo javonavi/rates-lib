@@ -2,13 +2,14 @@ package org.trade.rateslib.model;
 
 import org.slf4j.Logger;
 import org.trade.rateslib.data.RateEntity;
-import org.trade.rateslib.data.RatesService;
 import org.trade.rateslib.data.SwingEntity;
 import org.trade.rateslib.data.SwingHandlerContextEntity;
 import org.trade.rateslib.data.SwingsService;
+import org.trade.rateslib.data.impl.InMemoryRateRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -27,7 +28,7 @@ public class SwingsHandler {
     private final int reverseBarsCount;
     private final String timeframe;
     private final String stock;
-    private final RatesService ratesStorage;
+    private final InMemoryRateRepository inMemoryRateRepository;
     private final SwingsService swingsStorage;
     private final Logger log;
 
@@ -35,7 +36,6 @@ public class SwingsHandler {
                          String timeframe,
                          String stock,
                          SwingHandlerContextEntity swingHandlerContextEntity,
-                         RatesService ratesStorage,
                          SwingsService swingsStorage,
                          Logger logger) {
         this.timeframe = timeframe;
@@ -43,7 +43,7 @@ public class SwingsHandler {
         this.context = swingHandlerContextEntity;
         this.reverseBarsCount = reverseBarsCount;
         this.context.setReverseBarsCount(reverseBarsCount);
-        this.ratesStorage = ratesStorage;
+        this.inMemoryRateRepository = new InMemoryRateRepository();
         this.swingsStorage = swingsStorage;
         this.log = logger;
     }
@@ -60,10 +60,11 @@ public class SwingsHandler {
         return context;
     }
 
-    public synchronized Optional<SwingPoint> addRate(Rate rate) {
+    public synchronized Optional<SwingPoint> addRate(RateEntity rate) {
         Objects.requireNonNull(rate, "rate is null");
         log.debug("Add rate: rate={}", rate);
-
+        inMemoryRateRepository.insert(rate);
+        
         boolean debug = false;//LocalDateTime.parse("2021-01-08T06:00").equals(rate.getTime());
 
         if (debug) {
@@ -73,70 +74,81 @@ public class SwingsHandler {
         Optional<SwingPoint> result = Optional.empty();
 
         if (context.getLocalHigh() == null) {
-            context.setLocalHigh(rate.getHigh().doubleValue());
-            context.setCurrentHigh(rate.getHigh().doubleValue());
+            context.setLocalHigh(rate.getHigh());
+            context.setCurrentHigh(rate.getHigh());
         }
         if (context.getLocalLow() == null) {
-            context.setLocalLow(rate.getLow().doubleValue());
-            context.setCurrentLow(rate.getLow().doubleValue());
+            context.setLocalLow(rate.getLow());
+            context.setCurrentLow(rate.getLow());
         }
+
+        log.trace("Latest: workingPoint={}, workingPrice={}", context.getLastWorkingPoint(), context.getLastWorkingPrice());
 
         boolean alreadyReverse = false;
 
         if (context.getLastDownSwing() != null && context.getLastUpSwing() != null) {
+            List<SwingEntity> latest = swingsStorage.getLatest(stock, timeframe, 1);
             if (UP == context.getCurrentDirection()
-                    && Double.compare(rate.getLow().doubleValue(), context.getLastDownSwing()) < 0
-                    && Double.compare(rate.getHigh().doubleValue(), context.getLastUpSwing()) < 0) {
+                    && Double.compare(rate.getLow(), context.getLastDownSwing()) < 0
+                    && Double.compare(rate.getHigh(), context.getLastUpSwing()) < 0) {
                 correctNewLastWorkingPoint(DOWN, rate);
-                result = reverse(rate.getTime(), DOWN, "byLastSwing DOWN", ratesStorage);
+                if (latest.isEmpty() || !latest.get(0).getTime().isEqual(context.getLastWorkingPoint())) {
+                    result = reverse(rate.getTime(), DOWN, "byLastSwing DOWN", inMemoryRateRepository);
+                } else {
+                    log.debug("Skip reverse by swing: swingTime={}, lastWorkingPoint={}", latest.get(0).getTime(), context.getLastWorkingPoint());
+                }
                 context.setLastWorkingPoint(rate.getTime());
-                context.setCurrentLow(rate.getLow().doubleValue());
+                context.setCurrentLow(rate.getLow());
                 alreadyReverse = true;
             } else if (DOWN == context.getCurrentDirection()
-                    && Double.compare(rate.getHigh().doubleValue(), context.getLastUpSwing()) > 0
-                    && Double.compare(rate.getLow().doubleValue(), context.getLastDownSwing()) > 0) {
+                    && Double.compare(rate.getHigh(), context.getLastUpSwing()) > 0
+                    && Double.compare(rate.getLow(), context.getLastDownSwing()) > 0) {
                 correctNewLastWorkingPoint(UP, rate);
-                result = reverse(rate.getTime(), UP, "byLastSwing UP", ratesStorage);
+                if (latest.isEmpty() || !latest.get(0).getTime().isEqual(context.getLastWorkingPoint())) {
+                    result = reverse(rate.getTime(), UP, "byLastSwing UP", inMemoryRateRepository);
+                } else {
+                    log.debug("Skip reverse by swing: swingTime={}, lastWorkingPoint={}", latest.get(0).getTime(), context.getLastWorkingPoint());
+                }
                 context.setLastWorkingPoint(rate.getTime());
-                context.setCurrentHigh(rate.getHigh().doubleValue());
+                context.setCurrentHigh(rate.getHigh());
                 alreadyReverse = true;
             }
         }
 
         // Обновили оба максимума
-        if (!alreadyReverse && Double.compare(rate.getHigh().doubleValue(), context.getLocalHigh()) > 0 &&
-                Double.compare(rate.getLow().doubleValue(), context.getLocalLow()) < 0 && context.getCurrentDirection() != null) {
+        if (!alreadyReverse && Double.compare(rate.getHigh(), context.getLocalHigh()) > 0 &&
+                Double.compare(rate.getLow(), context.getLocalLow()) < 0 && context.getCurrentDirection() != null) {
             log.trace("Update extremums: context={}", context);
-            if ((UP == context.getCurrentDirection() && context.getCurrentHigh().compareTo(rate.getHigh().doubleValue()) < 0 ||
-                    (DOWN == context.getCurrentDirection() && context.getCurrentLow().compareTo(rate.getLow().doubleValue()) > 0))) {
+            if ((UP == context.getCurrentDirection() && context.getCurrentHigh().compareTo(rate.getHigh()) < 0 ||
+                    (DOWN == context.getCurrentDirection() && context.getCurrentLow().compareTo(rate.getLow()) > 0))) {
                 context.setLastWorkingPoint(rate.getTime());
                 log.trace("Set last working point: type=1.1, time={}", rate.getTime());
             }
 
-            if (UP == context.getCurrentDirection() && context.getCurrentHigh().compareTo(rate.getHigh().doubleValue()) < 0) {
-                if (!(context.getGlobalLow().compareTo(rate.getLow().doubleValue()) > 0 && rate.getClose().compareTo(rate.getOpen()) < 0) &&
-                        context.getCurrentHigh().compareTo(rate.getHigh().doubleValue()) < 0) {
-                    if (context.getLastWorkingPrice() == null || Double.compare(rate.getHigh().doubleValue(), context.getLastWorkingPrice()) > 0) {
+            if (UP == context.getCurrentDirection() && Double.compare(context.getCurrentHigh(), rate.getHigh()) < 0) {
+                if (!(context.getGlobalLow().compareTo(rate.getLow()) > 0 && rate.getClose().compareTo(rate.getOpen()) < 0) &&
+                        context.getCurrentHigh().compareTo(rate.getHigh()) < 0) {
+                    if (context.getLastWorkingPrice() == null || Double.compare(rate.getHigh(), context.getLastWorkingPrice()) > 0) {
                         context.setLastWorkingPoint(rate.getTime());
-                        context.setLastWorkingPrice(rate.getHigh().doubleValue());
+                        context.setLastWorkingPrice(rate.getHigh());
                         log.trace("Set last working point: type=1.2, time={}", rate.getTime());
                     }
-                    context.setCurrentHigh(rate.getHigh().doubleValue());
+                    context.setCurrentHigh(rate.getHigh());
                 }
-            } else if (DOWN == context.getCurrentDirection() && context.getCurrentLow().compareTo(rate.getLow().doubleValue()) > 0) {
+            } else if (DOWN == context.getCurrentDirection() && Double.compare(context.getCurrentLow(), rate.getLow()) > 0) {
                 if (context.getGlobalHigh() != null &&
-                        !(context.getGlobalHigh().compareTo(rate.getHigh().doubleValue()) < 0 &&
+                        !(context.getGlobalHigh().compareTo(rate.getHigh()) < 0 &&
                                 rate.getClose().compareTo(rate.getOpen()) > 0) &&
-                        context.getCurrentLow().compareTo(rate.getLow().doubleValue()) > 0) {
-                    if (context.getLastWorkingPrice() == null || Double.compare(rate.getLow().doubleValue(), context.getLastWorkingPrice()) < 0) {
+                        context.getCurrentLow().compareTo(rate.getLow()) > 0) {
+                    if (context.getLastWorkingPrice() == null || Double.compare(rate.getLow(), context.getLastWorkingPrice()) < 0) {
                         context.setLastWorkingPoint(rate.getTime());
-                        context.setLastWorkingPrice(rate.getLow().doubleValue());
+                        context.setLastWorkingPrice(rate.getLow());
                         log.trace("Set last working point: type=1.3, time={}", rate.getTime());
                     }
-                    context.setCurrentLow(rate.getLow().doubleValue());
+                    context.setCurrentLow(rate.getLow());
                 }
-            } else if ((UP == context.getCurrentDirection() && context.getCurrentHigh().compareTo(rate.getHigh().doubleValue()) < 0) ||
-                    (DOWN == context.getCurrentDirection() && context.getCurrentLow().compareTo(rate.getLow().doubleValue()) > 0)) {
+            } else if ((UP == context.getCurrentDirection() && context.getCurrentHigh().compareTo(rate.getHigh()) < 0) ||
+                    (DOWN == context.getCurrentDirection() && context.getCurrentLow().compareTo(rate.getLow()) > 0)) {
                 setLastWorkingPrice(rate);
                 context.setLastWorkingPoint(rate.getTime());
                 log.trace("Set last working point: type=1.4, time={}", rate.getTime());
@@ -145,88 +157,104 @@ public class SwingsHandler {
             context.setWaitingReverseCount(context.getReverseBarsCount() + 1);
 
             if (context.getReverseBarsCount() >= reverseBarsCount) {
-                if ((UP == context.getCurrentDirection() && !(context.getGlobalHigh().compareTo(rate.getHigh().doubleValue()) > 0)) ||
-                        (DOWN == context.getCurrentDirection() && !(context.getGlobalLow().compareTo(rate.getLow().doubleValue()) < 0))) {
-                    setLastWorkingPrice(rate);
-                    context.setLastWorkingPoint(rate.getTime());
-                    log.trace("Set last working point: type=1.5, time={}", rate.getTime());
+                if ((UP == context.getCurrentDirection() && !(context.getGlobalHigh().compareTo(rate.getHigh()) > 0)) ||
+                        (DOWN == context.getCurrentDirection() && !(context.getGlobalLow().compareTo(rate.getLow()) < 0))) {
+                    log.trace("lastWorkingPoint={}, currentDirection={}", context.getLastWorkingPoint(), context.getCurrentDirection());
+                    boolean updateWorkingPoint = true;
+                    List<SwingEntity> latest = swingsStorage.getLatest(stock, timeframe, 1);
+                    if (!latest.isEmpty() && context.getLastWorkingPoint() != null) {
+                        if (UP == context.getCurrentDirection()) {
+                            Optional<RateEntity> highest = inMemoryRateRepository.getHighestRate(latest.get(0).getTime(), rate.getTime());
+                            if (highest.isPresent() && highest.get().getTime().isEqual(context.getLastWorkingPoint())) {
+                                updateWorkingPoint = false;
+                            }
+                        } else {
+                            Optional<RateEntity> lowest = inMemoryRateRepository.getLowestRate(latest.get(0).getTime(), rate.getTime());
+                            if (lowest.isPresent() && lowest.get().getTime().isEqual(context.getLastWorkingPoint())) {
+                                updateWorkingPoint = false;
+                            }
+                        }
+                    }
+                    if (updateWorkingPoint) {
+                        setLastWorkingPrice(rate);
+                        context.setLastWorkingPoint(rate.getTime());
+                        log.trace("Set last working point: type=1.5, time={}", rate.getTime());
+                    }
                 }
             }
 
             if (UP == context.getCurrentDirection() && rate.getClose().compareTo(rate.getOpen()) < 0 &&
-                    context.getCurrentHigh().compareTo(rate.getHigh().doubleValue()) < 0) {
+                    context.getCurrentHigh().compareTo(rate.getHigh()) < 0) {
                 setLastWorkingPrice(rate);
                 context.setLastWorkingPoint(rate.getTime());
                 log.trace("Set last working point: type=1.6, time={}", rate.getTime());
-                context.setCurrentHigh(rate.getHigh().doubleValue());
+                context.setCurrentHigh(rate.getHigh());
             } else if (DOWN == context.getCurrentDirection() && rate.getClose().compareTo(rate.getOpen()) > 0 &&
-                    context.getCurrentLow().compareTo(rate.getLow().doubleValue()) > 0) {
+                    context.getCurrentLow().compareTo(rate.getLow()) > 0) {
                 setLastWorkingPrice(rate);
                 context.setLastWorkingPoint(rate.getTime());
                 log.trace("Set last working point: type=1.7, time={}", rate.getTime());
-                context.setCurrentLow(rate.getLow().doubleValue());
+                context.setCurrentLow(rate.getLow());
             }
 
-            context.setCurrentHigh(max(rate.getHigh().doubleValue(), context.getCurrentHigh()));
-            context.setCurrentLow(max(rate.getLow().doubleValue(), context.getCurrentLow()));
+            context.setCurrentHigh(max(rate.getHigh(), context.getCurrentHigh()));
+            context.setCurrentLow(max(rate.getLow(), context.getCurrentLow()));
         }
         // Обновили глобальный максимум
-        else if (!alreadyReverse && context.getGlobalHigh() != null && Double.compare(rate.getHigh().doubleValue(), context.getGlobalHigh()) > 0 &&
-                DOWN == context.getCurrentDirection() && !(context.getCurrentLow().compareTo(rate.getLow().doubleValue()) > 0)) {
+        else if (!alreadyReverse && context.getGlobalHigh() != null && Double.compare(rate.getHigh(), context.getGlobalHigh()) > 0 &&
+                DOWN == context.getCurrentDirection() && !(context.getCurrentLow().compareTo(rate.getLow()) > 0)) {
             log.trace("Update globalHigh");
-            result = reverse(rate.getTime(), UP, "Update global MAX", ratesStorage);
+            result = reverse(rate.getTime(), UP, "Update global MAX", inMemoryRateRepository);
             context.setLastWorkingPoint(rate.getTime());
             log.trace("Set last working point: type=2.1, time={}", rate.getTime());
             alreadyReverse = true;
-            context.setCurrentHigh(rate.getHigh().doubleValue());
+            context.setCurrentHigh(rate.getHigh());
         }
         // Обновили глобальный минимум
-        else if (!alreadyReverse && context.getGlobalLow() != null && Double.compare(rate.getLow().doubleValue(), context.getGlobalLow()) < 0 &&
-                UP == context.getCurrentDirection() && !(context.getCurrentHigh().compareTo(rate.getHigh().doubleValue()) < 0)) {
+        else if (!alreadyReverse && context.getGlobalLow() != null && Double.compare(rate.getLow(), context.getGlobalLow()) < 0 &&
+                UP == context.getCurrentDirection() && !(context.getCurrentHigh().compareTo(rate.getHigh()) < 0)) {
             log.trace("Update globalLow");
-            result = reverse(rate.getTime(), DOWN, "Update global MIN", ratesStorage);
+            result = reverse(rate.getTime(), DOWN, "Update global MIN", inMemoryRateRepository);
             context.setLastWorkingPoint(rate.getTime());
             log.trace("Set last working point: type=3.1, time={}", rate.getTime());
             alreadyReverse = true;
-            context.setCurrentLow(rate.getLow().doubleValue());
+            context.setCurrentLow(rate.getLow());
         }
         // Обновили только локальный максимум
-        else if (!alreadyReverse && Double.compare(rate.getHigh().doubleValue(), context.getLocalHigh()) > 0 &&
-                !(Double.compare(rate.getLow().doubleValue(), context.getLocalLow()) < 0)) {
-            log.trace("Update LocalHigh");
+        else if (!alreadyReverse && Double.compare(rate.getHigh(), context.getLocalHigh()) > 0 &&
+                !(Double.compare(rate.getLow(), context.getLocalLow()) < 0)) {
+            log.trace("Update LocalHigh: currentDirection={}", context.getCurrentDirection());
 
             if (UP == context.getCurrentDirection()) {
-                if (Double.compare(rate.getHigh().doubleValue(), context.getCurrentHigh()) > 0) {
-                    //if (ratesStorage.getRate(context.getLastWorkingPoint(), context.getTimeframe())
-                    //        .filter(r -> r.getHigh().compareTo(rate.getHigh()) > 0).isPresent()) {
+                if (Double.compare(rate.getHigh(), context.getCurrentHigh()) > 0) {
                     context.setWaitingReverseCount(0);
                     setLastWorkingPrice(rate);
                     context.setLastWorkingPoint(rate.getTime());
-                    log.trace("Set last working point: type=4.1, time={}", rate.getTime());
-                    //}
-                    context.setCurrentHigh(rate.getHigh().doubleValue());
+                    context.setCurrentHigh(rate.getHigh());
+                    log.trace("Set last working point: type=4.1, time={}, newCurrentHigh={}", rate.getTime(), context.getCurrentHigh());
                 }
             } else if (DOWN == context.getCurrentDirection()) {
                 log.trace("incWaitingReverseCount");
                 context.incWaitingReverseCount();
+                correctionWorkingPrice(rate.getTime());
                 if (context.getWaitingReverseCount() >= reverseBarsCount) {
-                    result = reverse(rate.getTime(), UP, "waitingReverseCount UP", ratesStorage);
+                    result = reverse(rate.getTime(), UP, "waitingReverseCount UP", inMemoryRateRepository);
                     alreadyReverse = true;
                 } else if (context.getLastWorkingPrice() != null && context.getLastDownSwing() != null &&
                         (context.getLastDownSwing() - context.getLastWorkingPrice()) * 0.5
-                                <= rate.getHigh().doubleValue() - context.getLastWorkingPrice()
+                                <= rate.getHigh() - context.getLastWorkingPrice()
                         && context.getWaitingReverseCount() >= reverseBarsCount - 1) {
-                    int movingSize = ratesStorage.getShift(stock, timeframe, context.getLastWorkingPoint()) -
-                            ratesStorage.getShift(stock, timeframe, rate.getTime());
+                    int movingSize = inMemoryRateRepository.getShift(context.getLastWorkingPoint()) -
+                            inMemoryRateRepository.getShift(rate.getTime());
                     if (movingSize > 1 && swingsStorage.getCount(stock, timeframe) > 1) {
                         int swingsCount = swingsStorage.getCount(stock, timeframe);
                         Optional<SwingEntity> swing1 = swingsStorage.getSwing(stock, timeframe, swingsCount - 1);
                         Optional<SwingEntity> swing2 = swingsStorage.getSwing(stock, timeframe, swingsCount - 2);
                         if (swing1.isPresent() && swing2.isPresent()) {
                             double swingSize = abs(swing1.get().getPrice() - context.getLastWorkingPrice());
-                            double diff = abs(rate.getLow().doubleValue() - swing2.get().getPrice());
+                            double diff = abs(rate.getLow() - swing2.get().getPrice());
                             if (swingSize > 0 && diff / swingSize < 0.2) {
-                                result = reverse(rate.getTime(), UP, "fastMoving UP", ratesStorage);
+                                result = reverse(rate.getTime(), UP, "fastMoving UP", inMemoryRateRepository);
                                 alreadyReverse = true;
                             }
                         }
@@ -237,42 +265,40 @@ public class SwingsHandler {
             }
         }
         // Обновили только локальный минимум
-        else if (!alreadyReverse && !(Double.compare(rate.getHigh().doubleValue(), context.getLocalHigh()) > 0) &&
-                Double.compare(rate.getLow().doubleValue(), context.getLocalLow()) < 0) {
-            log.trace("Update LocalLow");
+        else if (!alreadyReverse && !(Double.compare(rate.getHigh(), context.getLocalHigh()) > 0) &&
+                Double.compare(rate.getLow(), context.getLocalLow()) < 0) {
+            log.trace("Update LocalLow: currentDirection={}", context.getCurrentDirection());
 
             if (DOWN == context.getCurrentDirection()) {
-                if (Double.compare(rate.getLow().doubleValue(), context.getCurrentLow()) < 0) {
-                    //if (ratesStorage.getRate(context.getLastWorkingPoint(), context.getTimeframe())
-                    //        .filter(r -> r.getLow().compareTo(rate.getLow()) < 0).isPresent()) {
+                if (Double.compare(rate.getLow(), context.getCurrentLow()) < 0) {
                     context.setWaitingReverseCount(0);
                     setLastWorkingPrice(rate);
                     context.setLastWorkingPoint(rate.getTime());
-                    log.trace("Set last working point: type=5.1, time={}", rate.getTime());
-                    //}
-                    context.setCurrentLow(rate.getLow().doubleValue());
+                    context.setCurrentLow(rate.getLow());
+                    log.trace("Set last working point: type=5.1, time={}, newCurrentLow={}", rate.getTime(), context.getCurrentLow());
                 }
             } else if (UP == context.getCurrentDirection()) {
                 log.trace("incWaitingReverseCount");
                 context.incWaitingReverseCount();
+                correctionWorkingPrice(rate.getTime());
                 if (context.getWaitingReverseCount() >= reverseBarsCount) {
-                    result = reverse(rate.getTime(), DOWN, "waitingReverseCount DOWN", ratesStorage);
+                    result = reverse(rate.getTime(), DOWN, "waitingReverseCount DOWN", inMemoryRateRepository);
                     alreadyReverse = true;
                 } else if (context.getLastWorkingPrice() != null && context.getLastUpSwing() != null &&
                         (context.getLastWorkingPrice() - context.getLastUpSwing()) * 0.5
-                                <= context.getLastWorkingPrice() - rate.getLow().doubleValue()
+                                <= context.getLastWorkingPrice() - rate.getLow()
                         && context.getWaitingReverseCount() >= reverseBarsCount - 1) {
-                    int movingSize = ratesStorage.getShift(stock, timeframe, context.getLastWorkingPoint()) -
-                            ratesStorage.getShift(stock, timeframe, rate.getTime());
+                    int movingSize = inMemoryRateRepository.getShift(context.getLastWorkingPoint()) -
+                            inMemoryRateRepository.getShift(rate.getTime());
                     if (movingSize > 1 && swingsStorage.getCount(stock, timeframe) > 1) {
                         int swingsCount = swingsStorage.getCount(stock, timeframe);
                         Optional<SwingEntity> swing1 = swingsStorage.getSwing(stock, timeframe, swingsCount - 1);
                         Optional<SwingEntity> swing2 = swingsStorage.getSwing(stock, timeframe, swingsCount - 2);
                         if (swing1.isPresent() && swing2.isPresent()) {
                             double swingSize = abs(swing1.get().getPrice() - context.getLastWorkingPrice());
-                            double diff = abs(rate.getLow().doubleValue() - swing2.get().getPrice());
+                            double diff = abs(rate.getLow() - swing2.get().getPrice());
                             if (swingSize > 0 && diff / swingSize < 0.2) {
-                                result = reverse(rate.getTime(), DOWN, "fastMoving DOWN", ratesStorage);
+                                result = reverse(rate.getTime(), DOWN, "fastMoving DOWN", inMemoryRateRepository);
                                 alreadyReverse = true;
                             }
                         }
@@ -284,39 +310,39 @@ public class SwingsHandler {
         }
 
         if (!alreadyReverse && DOWN == context.getCurrentDirection()
-                && Double.compare(rate.getHigh().doubleValue(), context.getLocalHigh()) > 0) {
-            Optional<RateEntity> prevRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount);
+                && Double.compare(rate.getHigh(), context.getLocalHigh()) > 0) {
+            Optional<RateEntity> prevRate = inMemoryRateRepository.getRate(reverseBarsCount);
             if (prevRate.isPresent()
-                    && ratesStorage.getHighestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isPresent()
-                    && ratesStorage.getLowestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isEmpty()) {
-                result = reverse(rate.getTime(), UP, "barsUpCount", ratesStorage);
+                    && inMemoryRateRepository.getHighestRate(prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isPresent()
+                    && inMemoryRateRepository.getLowestRate(prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isEmpty()) {
+                result = reverse(rate.getTime(), UP, "barsUpCount", inMemoryRateRepository);
                 alreadyReverse = true;
             }
         }
 
         if (!alreadyReverse && UP == context.getCurrentDirection()
-                && Double.compare(rate.getLow().doubleValue(), context.getLocalLow()) < 0) {
-            Optional<RateEntity> prevRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount);
+                && Double.compare(rate.getLow(), context.getLocalLow()) < 0) {
+            Optional<RateEntity> prevRate = inMemoryRateRepository.getRate(reverseBarsCount);
             if (prevRate.isPresent()
-                    && ratesStorage.getLowestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isPresent()
-                    && ratesStorage.getHighestRate(stock, timeframe, prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isEmpty()) {
-                result = reverse(rate.getTime(), DOWN, "barsDownCount", ratesStorage);
+                    && inMemoryRateRepository.getLowestRate(prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isPresent()
+                    && inMemoryRateRepository.getHighestRate(prevRate.get().getTime(), rate.getTime()).filter(r -> r.getTime().equals(rate.getTime())).isEmpty()) {
+                result = reverse(rate.getTime(), DOWN, "barsDownCount", inMemoryRateRepository);
                 alreadyReverse = true;
             }
         }
 
-        context.setLocalHigh(rate.getHigh().doubleValue());
-        context.setLocalLow(rate.getLow().doubleValue());
+        context.setLocalHigh(rate.getHigh());
+        context.setLocalLow(rate.getLow());
 
         if (!alreadyReverse
                 && context.getCurrentDirection() != null
-                && ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 10).size() >= reverseBarsCount + 1) {
-            LocalDateTime reverseBarTime = ratesStorage.getLatestRate(stock, timeframe).get().getTime();
+                && inMemoryRateRepository.getLatest(reverseBarsCount + 10).size() >= reverseBarsCount + 1) {
+            LocalDateTime reverseBarTime = inMemoryRateRepository.getLatestRate().get().getTime();
             if (UP == context.getCurrentDirection() &&
                     (context.getLastWorkingPoint() != null && !context.getLastWorkingPoint().isAfter(reverseBarTime))) {
                 Optional<LocalDateTime> newLastWorkingPoint = checkDownReverseByLastBars();
                 if (newLastWorkingPoint.isPresent() && newLastWorkingPoint.get().isAfter(reverseBarTime)) {
-                    result = reverse(reverseBarTime, DOWN, "downByLastBars", ratesStorage, newLastWorkingPoint.get());
+                    result = reverse(reverseBarTime, DOWN, "downByLastBars", inMemoryRateRepository, newLastWorkingPoint.get());
                     //log.error("result={}", result);
                     alreadyReverse = true;
                 }
@@ -325,7 +351,7 @@ public class SwingsHandler {
                     (context.getLastWorkingPoint() != null && !context.getLastWorkingPoint().isAfter(reverseBarTime))) {
                 Optional<LocalDateTime> newLastWorkingPoint = checkUpReverseByLastBars();
                 if (newLastWorkingPoint.isPresent() && newLastWorkingPoint.get().isAfter(reverseBarTime)) {
-                    result = reverse(reverseBarTime, UP, "upByLastBars", ratesStorage, newLastWorkingPoint.get());
+                    result = reverse(reverseBarTime, UP, "upByLastBars", inMemoryRateRepository, newLastWorkingPoint.get());
                     //log.error("result={}", result);
                     alreadyReverse = true;
                 }
@@ -349,15 +375,15 @@ public class SwingsHandler {
         }
 
         if (UP == context.getCurrentDirection()) {
-            Optional<LocalDateTime> workingPoint = lastBarsGrowDown(ratesStorage);
+            Optional<LocalDateTime> workingPoint = lastBarsGrowDown(inMemoryRateRepository);
             if (workingPoint.isPresent()) {
-                result = reverse(rate.getTime(), DOWN, "lastBarsGrowDown", ratesStorage);
+                result = reverse(rate.getTime(), DOWN, "lastBarsGrowDown", inMemoryRateRepository);
                 alreadyReverse = true;
             }
         } else {
-            Optional<LocalDateTime> workingPoint = lastBarsGrowUp(ratesStorage);
+            Optional<LocalDateTime> workingPoint = lastBarsGrowUp(inMemoryRateRepository);
             if (workingPoint.isPresent()) {
-                result = reverse(rate.getTime(), UP, "lastBarsGrowUp", ratesStorage);
+                result = reverse(rate.getTime(), UP, "lastBarsGrowUp", inMemoryRateRepository);
                 alreadyReverse = true;
             }
         }
@@ -367,30 +393,55 @@ public class SwingsHandler {
         return result;
     }
 
+    private void correctionWorkingPrice(LocalDateTime lastRateTime) {
+        List<SwingEntity> latest = swingsStorage.getLatest(stock, timeframe, 1);
+        if (latest.isEmpty()) {
+            return;
+        }
+        if (latest.get(0).getDirection() == UP) {
+            Optional<RateEntity> re = inMemoryRateRepository.getHighestRate(latest.get(0).getTime().plusMinutes(10), lastRateTime);
+            if (re.isPresent()) {
+                log.debug("correctionLocalHigh: newHigh={}", re.get().getHigh());
+                context.setLocalHigh(re.get().getHigh());
+                context.setLastWorkingPrice(re.get().getHigh());
+                context.setLastWorkingPoint(re.get().getTime());
+            }
+        } else {
+            Optional<RateEntity> re = inMemoryRateRepository.getLowestRate(latest.get(0).getTime().plusMinutes(10), lastRateTime);
+            if (re.isPresent()) {
+                log.debug("correctionLocalLow: newLow={}", re.get().getLow());
+                context.setLocalLow(re.get().getLow());
+                context.setLastWorkingPrice(re.get().getLow());
+                context.setLastWorkingPoint(re.get().getTime());
+            }
+        }
+    }
+
     private void correctNewLastWorkingPoint(boolean direction,
-                                            Rate rate) {
+                                            RateEntity rate) {
         if (context.getLastWorkingPoint() == null) {
             return;
         }
         Optional<RateEntity> extremumRate = direction == UP
-                ? ratesStorage.getLowestRate(stock, timeframe, context.getLastWorkingPoint(), rate.getTime())
-                : ratesStorage.getHighestRate(stock, timeframe, context.getLastWorkingPoint(), rate.getTime());
+                ? inMemoryRateRepository.getLowestRate(context.getLastWorkingPoint(), rate.getTime())
+                : inMemoryRateRepository.getHighestRate(context.getLastWorkingPoint(), rate.getTime());
+        log.debug("correctNewLastWorkingPoint(): extremumRate={}, rate={}", extremumRate, rate);
         extremumRate.ifPresent(rt -> {
             context.setLastWorkingPoint(rt.getTime());
             if (direction == UP) {
-                context.setLastWorkingPrice(rt.getLow().doubleValue());
+                context.setLastWorkingPrice(rt.getLow());
             } else {
-                context.setLastWorkingPrice(rt.getHigh().doubleValue());
+                context.setLastWorkingPrice(rt.getHigh());
             }
         });
     }
 
     Optional<LocalDateTime> checkDownReverseByLastBars() {
-        if (ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 1).size() < reverseBarsCount + 1) {
+        if (inMemoryRateRepository.getLatest(reverseBarsCount + 1).size() < reverseBarsCount + 1) {
             return Optional.empty();
         }
 
-        RateEntity checkedRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount)
+        RateEntity checkedRate = inMemoryRateRepository.getRate(reverseBarsCount)
                 .orElseThrow();
         double high = checkedRate.getHigh();
         double low = checkedRate.getLow();
@@ -398,7 +449,7 @@ public class SwingsHandler {
         LocalDateTime time = checkedRate.getTime();
 
         for (int i = 0; i < reverseBarsCount; i++) {
-            RateEntity curRate = ratesStorage.getRate(stock, timeframe, i)
+            RateEntity curRate = inMemoryRateRepository.getRate(i)
                     .orElseThrow();
             double curLow = curRate.getLow();
             double curHigh = curRate.getHigh();
@@ -415,11 +466,11 @@ public class SwingsHandler {
     }
 
     Optional<LocalDateTime> checkUpReverseByLastBars() {
-        if (ratesStorage.getLatest(stock, timeframe, reverseBarsCount + 1).size() < reverseBarsCount + 1) {
+        if (inMemoryRateRepository.getLatest(reverseBarsCount + 1).size() < reverseBarsCount + 1) {
             return Optional.empty();
         }
 
-        RateEntity checkedRate = ratesStorage.getRate(stock, timeframe, reverseBarsCount)
+        RateEntity checkedRate = inMemoryRateRepository.getRate(reverseBarsCount)
                 .orElseThrow();
         double high = checkedRate.getHigh();
         double low = checkedRate.getLow();
@@ -427,7 +478,7 @@ public class SwingsHandler {
         LocalDateTime time = checkedRate.getTime();
 
         for (int i = 0; i < reverseBarsCount; i++) {
-            RateEntity curRate = ratesStorage.getRate(stock, timeframe, i)
+            RateEntity curRate = inMemoryRateRepository.getRate(i)
                     .orElseThrow();
             double curHigh = curRate.getHigh();
             double curLow = curRate.getLow();
@@ -443,24 +494,24 @@ public class SwingsHandler {
         return Optional.of(time);
     }
 
-    private void setLastWorkingPrice(Rate rate) {
+    private void setLastWorkingPrice(RateEntity rate) {
         if (context.getLastWorkingPrice() == null) {
-            double price = context.getCurrentDirection() == UP ? rate.getHigh().doubleValue() : rate.getLow().doubleValue();
+            double price = context.getCurrentDirection() == UP ? rate.getHigh() : rate.getLow();
             context.setLastWorkingPrice(price);
             log.debug("Set last working price: {}", price);
-        } else if (context.getCurrentDirection() == UP && Double.compare(rate.getHigh().doubleValue(), context.getLastWorkingPrice()) > 0) {
-            context.setLastWorkingPrice(rate.getHigh().doubleValue());
+        } else if (context.getCurrentDirection() == UP && Double.compare(rate.getHigh(), context.getLastWorkingPrice()) > 0) {
+            context.setLastWorkingPrice(rate.getHigh());
             log.debug("Set last working price: {}", rate.getHigh());
-        } else if (context.getCurrentDirection() == DOWN && Double.compare(rate.getLow().doubleValue(), context.getLastWorkingPrice()) < 0) {
-            context.setLastWorkingPrice(rate.getLow().doubleValue());
+        } else if (context.getCurrentDirection() == DOWN && Double.compare(rate.getLow(), context.getLastWorkingPrice()) < 0) {
+            context.setLastWorkingPrice(rate.getLow());
             log.debug("Set last working price: {}", rate.getLow());
         }
     }
 
-    private Optional<LocalDateTime> lastBarsGrowUp(RatesService ratesStorage) {
-        int barsCount = ratesStorage.getLatest(stock, timeframe, reverseBarsCount * 2 + 11).size();
+    private Optional<LocalDateTime> lastBarsGrowUp(InMemoryRateRepository inMemoryRateRepository) {
+        int barsCount = inMemoryRateRepository.getLatest(reverseBarsCount * 2 + 11).size();
         if (barsCount <= reverseBarsCount * 2 + 10) return Optional.empty();
-        RateEntity bar = ratesStorage.getRate(stock, timeframe, 0)
+        RateEntity bar = inMemoryRateRepository.getRate(0)
                 .orElseThrow();
         double high = bar.getHigh();
         double low = bar.getLow();
@@ -468,7 +519,7 @@ public class SwingsHandler {
         LocalDateTime workingPoint = bar.getTime();
 
         for (int i = 1; i <= reverseBarsCount; i++) {
-            RateEntity prevBar = ratesStorage.getRate(stock, timeframe, i)
+            RateEntity prevBar = inMemoryRateRepository.getRate(i)
                     .orElseThrow();
             if (bar.getHigh() < prevBar.getHigh()) return Optional.empty();
             if (min > prevBar.getLow()) {
@@ -479,17 +530,17 @@ public class SwingsHandler {
         }
         if (bar.getLow() >= low) return Optional.empty();
         for (int i = reverseBarsCount + 1; i < reverseBarsCount * 2 && i < barsCount - 1; i++) {
-            RateEntity prevBar = ratesStorage.getRate(stock, timeframe, i)
+            RateEntity prevBar = inMemoryRateRepository.getRate(i)
                     .orElseThrow();
             if (prevBar.getHigh() >= high) return Optional.empty();
         }
         return Optional.of(workingPoint);
     }
 
-    private Optional<LocalDateTime> lastBarsGrowDown(RatesService ratesStorage) {
-        int barsCount = ratesStorage.getLatest(stock, timeframe, reverseBarsCount * 2 + 11).size();
+    private Optional<LocalDateTime> lastBarsGrowDown(InMemoryRateRepository inMemoryRateRepository) {
+        int barsCount = inMemoryRateRepository.getLatest(reverseBarsCount * 2 + 11).size();
         if (barsCount <= reverseBarsCount * 2 + 10) return Optional.empty();
-        RateEntity bar = ratesStorage.getRate(stock, timeframe, 0)
+        RateEntity bar = inMemoryRateRepository.getRate(0)
                 .orElseThrow();
         double low = bar.getLow();
         double high = bar.getHigh();
@@ -497,7 +548,7 @@ public class SwingsHandler {
         LocalDateTime workingPoint = bar.getTime();
 
         for (int i = 1; i <= reverseBarsCount; i++) {
-            RateEntity prevBar = ratesStorage.getRate(stock, timeframe, i)
+            RateEntity prevBar = inMemoryRateRepository.getRate(i)
                     .orElseThrow();
             if (bar.getLow() > prevBar.getLow()) return Optional.empty();
             if (max < prevBar.getHigh()) {
@@ -508,20 +559,25 @@ public class SwingsHandler {
         }
         if (bar.getHigh() <= high) return Optional.empty();
         for (int i = reverseBarsCount + 1; i < reverseBarsCount * 2 && i < barsCount - 1; i++) {
-            RateEntity prevBar = ratesStorage.getRate(stock, timeframe, i)
+            RateEntity prevBar = inMemoryRateRepository.getRate(i)
                     .orElseThrow();
             if (prevBar.getLow() <= low) return Optional.empty();
         }
         return Optional.of(workingPoint);
     }
 
-    private Optional<SwingPoint> reverse(LocalDateTime time, boolean direction, String cause,
-                                         RatesService ratesStorage) {
-        return reverse(time, direction, cause, ratesStorage, null);
+    private Optional<SwingPoint> reverse(LocalDateTime time,
+                                         boolean direction,
+                                         String cause,
+                                         InMemoryRateRepository inMemoryRateRepository) {
+        return reverse(time, direction, cause, inMemoryRateRepository, null);
     }
 
-    private Optional<SwingPoint> reverse(LocalDateTime time, boolean direction, String cause,
-                                         RatesService ratesStorage, LocalDateTime newLastWorkingPoint) {
+    private Optional<SwingPoint> reverse(LocalDateTime time,
+                                         boolean direction,
+                                         String cause,
+                                         InMemoryRateRepository inMemoryRateRepository,
+                                         LocalDateTime newLastWorkingPoint) {
         log.debug("Reverse: direction={}, time={}, cause={}, lastWorkingPoint={}, period={}, newLastWorkingPoint={}",
                 direction, time, cause, context.getLastWorkingPoint(), timeframe, newLastWorkingPoint);
         Objects.requireNonNull(time, "time is null");
@@ -533,19 +589,19 @@ public class SwingsHandler {
             //return Optional.empty();
         }
 
-        int shift = ratesStorage.getShift(stock, timeframe, context.getLastWorkingPoint());
+        int shift = inMemoryRateRepository.getShift(context.getLastWorkingPoint());
         if (shift == -1) {
             log.warn("shift=-1: time={}, context.getTimeframe()={}, context.getLastWorkingPoint()={}", time,
                     timeframe, context.getLastWorkingPoint());
         }
-        RateEntity rate = ratesStorage.getRate(stock, timeframe, shift)
+        RateEntity rate = inMemoryRateRepository.getRate(shift)
                 .orElseThrow();
         double price = direction == UP ? rate.getLow() : rate.getHigh();
         if (context.getLastWorkingPrice() != null) {
             price = context.getLastWorkingPrice();
         }
         log.debug("Reverse: price={}, time={}, shift={}, reason={}, reverseTime={}", price, context.getLastWorkingPoint(), shift,
-                cause, ratesStorage.getRate(stock, timeframe, 0).map(RateEntity::getTime).orElse(null));
+                cause, inMemoryRateRepository.getRate(0).map(RateEntity::getTime).orElse(null));
         SwingPoint swing = SwingPoint.builder()
                 .withSection(0)
                 .withTime(context.getLastWorkingPoint())
@@ -559,7 +615,7 @@ public class SwingsHandler {
             log.debug("Set last working point by nullable prevLastWorkingPoint: {}", time);
             context.setLastWorkingPoint(time);
         } else {
-            int nextShift = ratesStorage.getShift(stock, timeframe, time);
+            int nextShift = inMemoryRateRepository.getShift(time);
             if (nextShift == shift) {
                 log.debug("Set last working point by shift: {}", time);
                 context.setLastWorkingPoint(time);
@@ -567,19 +623,19 @@ public class SwingsHandler {
             //debug(time, "nextShift=" + IntegerToString(nextShift) + "; shift=" + IntegerToString(shift));
             //debug(time, "nextShift=" + TimeToString(iTime(symbol, period, nextShift)) + "; shift=" + TimeToString(iTime(symbol, period, shift)));
             if (direction == UP) {
-                ratesStorage.getHighestRate(stock, timeframe, prevLastWorkingPoint, time)
+                inMemoryRateRepository.getHighestRate(prevLastWorkingPoint, time)
                         .ifPresent(rt -> {
                             context.setLastWorkingPoint(rt.getTime());
-                            context.setLastWorkingPrice(rt.getHigh().doubleValue());
+                            context.setLastWorkingPrice(rt.getHigh());
                         });
                 //lastWorkingPoint = iTime(symbol, period, iHighest(symbol, TFMigrate(period), MODE_HIGH, shift - nextShift, nextShift));
                 //debug(time, "1: " + IntegerToString(iHighest(symbol, TFMigrate(period), MODE_HIGH, shift - nextShift, nextShift)));
                 //debug(time, "1: " + TimeToString(iTime(symbol, period, 50)));
             } else {
-                ratesStorage.getLowestRate(stock, timeframe, prevLastWorkingPoint, time)
+                inMemoryRateRepository.getLowestRate(prevLastWorkingPoint, time)
                         .ifPresent(rt -> {
                             context.setLastWorkingPoint(rt.getTime());
-                            context.setLastWorkingPrice(rt.getLow().doubleValue());
+                            context.setLastWorkingPrice(rt.getLow());
                         });
                 //lastWorkingPoint = iTime(symbol, period, iLowest(symbol, TFMigrate(period), MODE_LOW, shift - nextShift, nextShift));
                 //debug(time, "2: " + IntegerToString(iLowest(symbol, TFMigrate(period), MODE_LOW, shift - nextShift, nextShift)));

@@ -289,7 +289,7 @@ public class FileStorageRateRepository implements RateRepository {
     public List<RateEntity> getLatest(LocalDateTime beforeTime, int limit) {
         List<RateEntity> result = new ArrayList<>();
         StorageBlock block = getBlockByTime(beforeTime);
-        result.addAll(loadFile(block));
+        result.addAll(loadFile(block).stream().filter(r -> r.getTime().isBefore(beforeTime)).collect(Collectors.toList()));
         int emptyBlocksCount = 0;
         while (result.size() < limit) {
             block = getBlockBefore(block);
@@ -308,7 +308,7 @@ public class FileStorageRateRepository implements RateRepository {
                 break;
             }
             emptyBlocksCount = 0;
-            result.addAll(loadedRates);
+            result.addAll(loadedRates.stream().filter(r -> r.getTime().isBefore(beforeTime)).collect(Collectors.toList()));
         }
         return result.stream()
                 .sorted(Comparator.comparing(RateEntity::getTime, Comparator.reverseOrder()))

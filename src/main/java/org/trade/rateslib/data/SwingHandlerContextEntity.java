@@ -41,20 +41,20 @@ public class SwingHandlerContextEntity {
     public SwingHandlerContextEntity clone() {
         SwingHandlerContextEntity entity = new SwingHandlerContextEntity();
 
-        entity.setTime(entity.getTime());
-        entity.setLocalHigh(entity.getLocalHigh());
-        entity.setLocalLow(entity.getLocalLow());
-        entity.setCurrentHigh(entity.getCurrentHigh());
-        entity.setCurrentLow(entity.getCurrentLow());
-        entity.setGlobalHigh(entity.getGlobalHigh());
-        entity.setGlobalLow(entity.getGlobalLow());
-        entity.setCurrentDirection(entity.getCurrentDirection());
-        entity.setReverseBarsCount(entity.getReverseBarsCount());
-        entity.setWaitingReverseCount(entity.getWaitingReverseCount());
-        entity.setLastWorkingPoint(entity.getLastWorkingPoint());
-        entity.setLastDownSwing(entity.getLastDownSwing());
-        entity.setLastUpSwing(entity.getLastUpSwing());
-        entity.setLastWorkingPrice(entity.getLastWorkingPrice());
+        entity.setTime(getTime());
+        entity.setLocalHigh(getLocalHigh());
+        entity.setLocalLow(getLocalLow());
+        entity.setCurrentHigh(getCurrentHigh());
+        entity.setCurrentLow(getCurrentLow());
+        entity.setGlobalHigh(getGlobalHigh());
+        entity.setGlobalLow(getGlobalLow());
+        entity.setCurrentDirection(getCurrentDirection());
+        entity.setReverseBarsCount(getReverseBarsCount());
+        entity.setWaitingReverseCount(getWaitingReverseCount());
+        entity.setLastWorkingPoint(getLastWorkingPoint());
+        entity.setLastDownSwing(getLastDownSwing());
+        entity.setLastUpSwing(getLastUpSwing());
+        entity.setLastWorkingPrice(getLastWorkingPrice());
 
         return entity;
     }
