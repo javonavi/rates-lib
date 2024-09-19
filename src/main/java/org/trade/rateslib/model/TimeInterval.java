@@ -20,4 +20,25 @@ public class TimeInterval {
                                   Timeframe timeframe) {
         return new TimeInterval(fromTime, toTime, timeframe);
     }
+
+    public LocalDateTime getFromTime() {
+        return fromTime;
+    }
+
+    public LocalDateTime getToTime() {
+        return toTime;
+    }
+
+    public Timeframe getTimeframe() {
+        return timeframe;
+    }
+
+    @Override
+    public String toString() {
+        return "TimeInterval{" +
+                "fromTime=" + fromTime +
+                ", toTime=" + toTime +
+                ", timeframe=" + timeframe +
+                '}';
+    }
 }
