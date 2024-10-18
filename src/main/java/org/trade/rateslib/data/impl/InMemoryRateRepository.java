@@ -61,6 +61,10 @@ public class InMemoryRateRepository implements RateRepository {
         if (list.isEmpty()) {
             return null;
         }
+        int preparedIndex = list.size() - index - 1;
+        if (preparedIndex >= list.size()) {
+            return null;
+        }
         return list.get(list.size() - index - 1);
     }
 
