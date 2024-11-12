@@ -91,6 +91,7 @@ public class SwingPoint implements Serializable {
 
         if (!time.equals(that.time)) return false;
         if (!price.equals(that.price)) return false;
+        if (!timeframe.equals(that.timeframe)) return false;
         return direction == that.direction;
     }
 
@@ -99,6 +100,7 @@ public class SwingPoint implements Serializable {
         int result = time.hashCode();
         result = 31 * result + price.hashCode();
         result = 31 * result + direction.hashCode();
+        result = 31 * result + timeframe.hashCode();
         return result;
     }
 
