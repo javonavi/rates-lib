@@ -106,7 +106,7 @@ public enum Timeframe {
         public long getSeconds() {
             long seconds = 0;
             if (period != null) {
-                seconds += period.get(ChronoUnit.SECONDS);
+                seconds += (long) period.getDays() * 24 * 60 * 60;
             }
             if (duration != null) {
                 seconds += duration.getSeconds();
