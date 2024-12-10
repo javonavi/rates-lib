@@ -2,6 +2,7 @@ package org.trade.rateslib.model;
 
 import java.time.Duration;
 import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
@@ -100,6 +101,17 @@ public enum Timeframe {
 
         public Duration getDuration() {
             return duration;
+        }
+
+        public long getSeconds() {
+            long seconds = 0;
+            if (period != null) {
+                seconds += period.get(ChronoUnit.SECONDS);
+            }
+            if (duration != null) {
+                seconds += duration.getSeconds();
+            }
+            return seconds;
         }
 
         public static TimeframeDuration of(Period period, Duration duration) {
