@@ -388,6 +388,35 @@ public class SwingsHandler {
             }
         }
 
+        if (!alreadyReverse) {
+            List<RateEntity> latestRates = inMemoryRateRepository.getLatest(reverseBarsCount + 2);
+            if (latestRates.size() == reverseBarsCount + 2) {
+                boolean isReverse = true;
+                RateEntity last = latestRates.get(latestRates.size() - 1);
+                if (latestRates.size() > reverseBarsCount) {
+                    for (int i = 0; i < latestRates.size() - 1; i++) {
+                        RateEntity checkedRate = latestRates.get(i);
+                        if (last.getHigh() - last.getLow() < (checkedRate.getHigh() - checkedRate.getLow()) * 2) {
+                            isReverse = false;
+                            break;
+                        }
+                        if (UP == context.getCurrentDirection() && last.getLow() >= checkedRate.getLow()) {
+                            isReverse = false;
+                            break;
+                        } else if (DOWN == context.getCurrentDirection() && last.getHigh() <= checkedRate.getHigh()) {
+                            isReverse = false;
+                            break;
+                        }
+                    }
+                    if (isReverse) {
+                        boolean newDirection = context.getCurrentDirection() == UP ? DOWN : UP;
+                        result = reverse(rate.getTime(), newDirection, "runningBar" + (newDirection == UP ? "Up" : "Down"), inMemoryRateRepository);
+                        alreadyReverse = true;
+                    }
+                }
+            }
+        }
+
         if (debug) System.out.println("result: " + result);
 
         return result;
