@@ -26,7 +26,7 @@ public class MovingAverage {
         return result;
     }
 
-    public static enum MovingAverageType {
+    public enum MovingAverageType {
         SMA,
 
         ;
