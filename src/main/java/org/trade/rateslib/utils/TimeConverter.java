@@ -38,6 +38,9 @@ public class TimeConverter {
             }
             curTimeframe = curTimeframe.getNext().get();
         }
+        if (toTimeframe == Timeframe.W1 && curTime.getDayOfWeek().getValue() == 7) {
+            return curTime.plusDays(1);
+        }
         return curTime;
     }
 
