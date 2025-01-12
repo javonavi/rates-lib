@@ -3,19 +3,25 @@ package org.trade.rateslib.indicator;
 import org.trade.rateslib.model.PriceType;
 import org.trade.rateslib.model.Rate;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class Rsi {
 
-    public List<Double> calc(List<Rate> rates,
-                             int period,
-                             PriceType priceType) {
-        List<Double> result = new ArrayList<>();
+    public Map<LocalDateTime, Double> calc(List<Rate> rates,
+                                           int period,
+                                           PriceType priceType) {
+        Map<LocalDateTime, Double> result = new HashMap<>();
         RsiCalculator rsiCalculator = new RsiCalculator(period);
         for (int i = 0; i < rates.size(); i++) {
-            rsiCalculator.calc(getPrice(rates.get(i), priceType)).ifPresent(result::add);
+            var res = rsiCalculator.calc(getPrice(rates.get(i), priceType));
+            if (res.isPresent()) {
+                result.put(rates.get(i).getTime(), res.orElseThrow());
+            }
         }
         return result;
     }
