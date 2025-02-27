@@ -410,8 +410,12 @@ public class SwingsHandler {
                     }
                     if (isReverse) {
                         boolean newDirection = context.getCurrentDirection() == UP ? DOWN : UP;
-                        result = reverse(rate.getTime(), newDirection, "runningBar" + (newDirection == UP ? "Up" : "Down"), inMemoryRateRepository);
-                        alreadyReverse = true;
+
+                        context.setLastWorkingPrice(newDirection == UP ? rate.getLow() : rate.getHigh());
+                        context.setLastWorkingPoint(rate.getTime());
+
+                        //result = reverse(rate.getTime(), newDirection, "runningBar" + (newDirection == UP ? "Up" : "Down"), inMemoryRateRepository);
+                        //alreadyReverse = true;
                     }
                 }
             }
