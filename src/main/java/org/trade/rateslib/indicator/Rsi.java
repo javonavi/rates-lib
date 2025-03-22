@@ -33,6 +33,7 @@ public class Rsi {
             case HIGH -> rate.getHigh().doubleValue();
             case LOW -> rate.getLow().doubleValue();
             case CLOSE -> rate.getClose().doubleValue();
+            case HLC3 -> (rate.getClose().doubleValue() + rate.getHigh().doubleValue() + rate.getLow().doubleValue()) / 3.;
         };
     }
 
