@@ -9,7 +9,9 @@ import org.trade.rateslib.data.impl.InMemoryRateRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -31,6 +33,7 @@ public class SwingsHandler {
     private final InMemoryRateRepository inMemoryRateRepository;
     private final SwingsService swingsStorage;
     private final Logger log;
+    private final Map<LocalDateTime, RateEntity> ratesCache = new HashMap<>();
 
     public SwingsHandler(int reverseBarsCount,
                          String timeframe,
@@ -60,10 +63,11 @@ public class SwingsHandler {
         return context;
     }
 
-    public synchronized Optional<SwingPoint> addRate(RateEntity rate) {
+    public synchronized Optional<SwingPointWithData> addRate(RateEntity rate) {
         Objects.requireNonNull(rate, "rate is null");
         log.debug("Add rate: rate={}", rate);
         inMemoryRateRepository.insert(rate);
+        ratesCache.put(rate.getTime(), rate);
         
         boolean debug = false;//LocalDateTime.parse("2021-01-08T06:00").equals(rate.getTime());
 
@@ -71,7 +75,7 @@ public class SwingsHandler {
             System.out.println("Debug is enabled: " + rate.getTime());
         }
 
-        Optional<SwingPoint> result = Optional.empty();
+        Optional<SwingPointWithData> result = Optional.empty();
 
         if (context.getLocalHigh() == null) {
             context.setLocalHigh(rate.getHigh());
@@ -204,21 +208,21 @@ public class SwingsHandler {
         else if (!alreadyReverse && context.getGlobalHigh() != null && Double.compare(rate.getHigh(), context.getGlobalHigh()) > 0 &&
                 DOWN == context.getCurrentDirection() && !(context.getCurrentLow().compareTo(rate.getLow()) > 0)) {
             log.trace("Update globalHigh");
-            result = reverse(rate.getTime(), UP, "Update global MAX", inMemoryRateRepository);
             context.setLastWorkingPoint(rate.getTime());
             log.trace("Set last working point: type=2.1, time={}", rate.getTime());
             alreadyReverse = true;
             context.setCurrentHigh(rate.getHigh());
+            result = reverse(rate.getTime(), UP, "Update global MAX", inMemoryRateRepository);
         }
         // Обновили глобальный минимум
         else if (!alreadyReverse && context.getGlobalLow() != null && Double.compare(rate.getLow(), context.getGlobalLow()) < 0 &&
                 UP == context.getCurrentDirection() && !(context.getCurrentHigh().compareTo(rate.getHigh()) < 0)) {
             log.trace("Update globalLow");
-            result = reverse(rate.getTime(), DOWN, "Update global MIN", inMemoryRateRepository);
             context.setLastWorkingPoint(rate.getTime());
             log.trace("Set last working point: type=3.1, time={}", rate.getTime());
             alreadyReverse = true;
             context.setCurrentLow(rate.getLow());
+            result = reverse(rate.getTime(), DOWN, "Update global MIN", inMemoryRateRepository);
         }
         // Обновили только локальный максимум
         else if (!alreadyReverse && Double.compare(rate.getHigh(), context.getLocalHigh()) > 0 &&
@@ -411,11 +415,13 @@ public class SwingsHandler {
                     if (isReverse) {
                         boolean newDirection = context.getCurrentDirection() == UP ? DOWN : UP;
 
+                        if (context.getLastWorkingPoint() != null) {
+                            result = reverse(context.getLastWorkingPoint(), newDirection, "runningBar" + (newDirection == UP ? "Up" : "Down"), inMemoryRateRepository);
+                            alreadyReverse = true;
+                        }
+
                         context.setLastWorkingPrice(newDirection == UP ? rate.getLow() : rate.getHigh());
                         context.setLastWorkingPoint(rate.getTime());
-
-                        //result = reverse(rate.getTime(), newDirection, "runningBar" + (newDirection == UP ? "Up" : "Down"), inMemoryRateRepository);
-                        //alreadyReverse = true;
                     }
                 }
             }
@@ -599,14 +605,14 @@ public class SwingsHandler {
         return Optional.of(workingPoint);
     }
 
-    private Optional<SwingPoint> reverse(LocalDateTime time,
+    private Optional<SwingPointWithData> reverse(LocalDateTime time,
                                          boolean direction,
                                          String cause,
                                          InMemoryRateRepository inMemoryRateRepository) {
         return reverse(time, direction, cause, inMemoryRateRepository, null);
     }
 
-    private Optional<SwingPoint> reverse(LocalDateTime time,
+    private Optional<SwingPointWithData> reverse(LocalDateTime time,
                                          boolean direction,
                                          String cause,
                                          InMemoryRateRepository inMemoryRateRepository,
@@ -627,12 +633,13 @@ public class SwingsHandler {
             log.warn("shift=-1: time={}, context.getTimeframe()={}, context.getLastWorkingPoint()={}", time,
                     timeframe, context.getLastWorkingPoint());
         }
-        RateEntity rate = inMemoryRateRepository.getRate(shift)
-                .orElseThrow();
+        RateEntity rate = ratesCache.get(context.getLastWorkingPoint());
         double price = direction == UP ? rate.getLow() : rate.getHigh();
+        /*
         if (context.getLastWorkingPrice() != null) {
             price = context.getLastWorkingPrice();
         }
+         */
         log.debug("Reverse: price={}, time={}, shift={}, reason={}, reverseTime={}", price, context.getLastWorkingPoint(), shift,
                 cause, inMemoryRateRepository.getRate(0).map(RateEntity::getTime).orElse(null));
         SwingPoint swing = SwingPoint.builder()
@@ -692,7 +699,7 @@ public class SwingsHandler {
             context.setLastDownSwing(price);
         }
 
-        return Optional.of(swing);
+        return Optional.of(new SwingPointWithData(swing, cause, newLastWorkingPoint));
     }
 
     @Override
@@ -702,5 +709,38 @@ public class SwingsHandler {
                 ", reverseBarsCount=" + reverseBarsCount +
                 ", timeframe=" + timeframe +
                 '}';
+    }
+
+    public static class SwingPointWithData {
+        private final SwingPoint swingPoint;
+        private final String cause;
+        private final LocalDateTime newLastWorkingPoint;
+
+        public SwingPointWithData(SwingPoint swingPoint, String cause, LocalDateTime newLastWorkingPoint) {
+            this.swingPoint = swingPoint;
+            this.cause = cause;
+            this.newLastWorkingPoint = newLastWorkingPoint;
+        }
+
+        public SwingPoint getSwingPoint() {
+            return swingPoint;
+        }
+
+        public String getCause() {
+            return cause;
+        }
+
+        public LocalDateTime getNewLastWorkingPoint() {
+            return newLastWorkingPoint;
+        }
+
+        @Override
+        public String toString() {
+            return "SwingPointWithData{" +
+                    "swingPoint=" + swingPoint +
+                    ", cause='" + cause + '\'' +
+                    ", newLastWorkingPoint=" + newLastWorkingPoint +
+                    '}';
+        }
     }
 }

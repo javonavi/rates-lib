@@ -55,7 +55,7 @@ public class TimeUtils {
             case H1:
                 return time.plusHours(ratio);
             case H4:
-                return time.plusHours(ratio >> 2);
+                return time.plusHours(ratio << 2);
             case D1:
                 return time.plusDays(ratio);
             case W1:
@@ -81,7 +81,7 @@ public class TimeUtils {
             case H1:
                 return time.minusHours(ratio);
             case H4:
-                return time.minusHours(ratio >> 2);
+                return time.minusHours(ratio << 2);
             case D1:
                 return time.minusDays(ratio);
             case W1:
