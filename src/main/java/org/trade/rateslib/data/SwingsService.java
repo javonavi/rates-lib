@@ -320,4 +320,12 @@ public class SwingsService {
         result.add(swing);
         return result.stream().sorted(Comparator.comparing(SwingPoint::getTime)).collect(Collectors.toList());
     }
+
+    public List<SwingPoint> findSwingsBeforeTime(String stock,
+                                                 String timeframe,
+                                                 LocalDateTime time,
+                                                 int count) {
+        return getRepository(stock, timeframe).findBeforeTime(time, count).stream()
+                .map(s -> convertEntityToSwing(s, timeframe)).toList();
+    }
 }

@@ -2,7 +2,6 @@ package org.trade.rateslib.data.impl;
 
 import org.trade.rateslib.data.SwingEntity;
 import org.trade.rateslib.data.SwingRepository;
-import org.trade.rateslib.model.SwingPoint;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,8 +13,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-
-import static java.lang.Math.max;
 
 /**
  * @author javonavi
@@ -50,6 +47,21 @@ public class InMemorySwingRepository implements SwingRepository {
     @Override
     public Optional<SwingEntity> findBeforeTime(LocalDateTime time) {
         return Optional.ofNullable(tree.lowerEntry(time)).map(Map.Entry::getValue);
+    }
+
+    @Override
+    public List<SwingEntity> findBeforeTime(LocalDateTime time, int count) {
+        LocalDateTime curTime = time;
+        List<SwingEntity> result = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            var v = Optional.ofNullable(tree.lowerEntry(curTime)).map(Map.Entry::getValue);
+            if (v.isEmpty()) {
+                break;
+            }
+            curTime = v.orElseThrow().getTime();
+            result.add(v.orElseThrow());
+        }
+        return result.stream().sorted(Comparator.comparing(SwingEntity::getTime)).toList();
     }
 
     @Override
