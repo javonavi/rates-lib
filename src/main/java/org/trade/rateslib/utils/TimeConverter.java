@@ -61,6 +61,8 @@ public class TimeConverter {
                 return calcTimeForHours(time, 1);
             case H4:
                 return calcTimeForHours(time, 4);
+            case H8:
+                return calcTimeForHours(time, 8);
             case D1:
                 LocalDateTime calcedTimeD1 = time.minusMinutes(time.getMinute());
                 return calcedTimeD1.minusHours(calcedTimeD1.getHour());

@@ -30,6 +30,8 @@ public class TimeUtils {
                 return ChronoUnit.HOURS.between(time1, time2);
             case H4:
                 return ChronoUnit.HOURS.between(time1, time2) >> 2;
+            case H8:
+                return ChronoUnit.HOURS.between(time1, time2) / 3;
             case D1:
                 return ChronoUnit.DAYS.between(time1, time2);
             case W1:
@@ -56,6 +58,8 @@ public class TimeUtils {
                 return time.plusHours(ratio);
             case H4:
                 return time.plusHours(ratio << 2);
+            case H8:
+                return time.plusHours(ratio * 8);
             case D1:
                 return time.plusDays(ratio);
             case W1:
@@ -82,6 +86,8 @@ public class TimeUtils {
                 return time.minusHours(ratio);
             case H4:
                 return time.minusHours(ratio << 2);
+            case H8:
+                return time.minusHours(ratio * 8);
             case D1:
                 return time.minusDays(ratio);
             case W1:
@@ -115,6 +121,10 @@ public class TimeUtils {
                 return bars * 365.;
             case H1:
                 return bars * (365. * 24.);
+            case H4:
+                return bars * (365. * 6.);
+            case H8:
+                return bars * (365. * 3.);
 
             default:
                 throw new RuntimeException("Unexpected timeframeЖ " + timeframe);
@@ -134,6 +144,10 @@ public class TimeUtils {
                 return bars / 365.;
             case H1:
                 return bars / (365. * 24.);
+            case H4:
+                return bars / (365. * 6.);
+            case H8:
+                return bars / (365. * 3.);
 
             default:
                 throw new RuntimeException("Unexpected timeframeЖ " + timeframe);
@@ -150,6 +164,8 @@ public class TimeUtils {
                 return time.truncatedTo(ChronoUnit.HOURS);
             case H4:
                 return time.truncatedTo(ChronoUnit.HOURS).minusHours(time.getHour() % 4);
+            case H8:
+                return time.truncatedTo(ChronoUnit.HOURS).minusHours(time.getHour() % 8);
             case D1:
                 return time.truncatedTo(ChronoUnit.DAYS);
             case W1:
