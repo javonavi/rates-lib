@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -19,6 +20,24 @@ public enum Timeframe {
     MN1("MN1", 43200, "MN3", "W1", cnt -> TimeframeDuration.of(Period.ofMonths(cnt.intValue()), Duration.ZERO)),
     MN3("MN3", 129600, "Y1", "MN1", cnt -> TimeframeDuration.of(Period.ofMonths(cnt.intValue() * 3), Duration.ZERO)),
     Y1("Y1", 518400, null, "MN3", cnt -> TimeframeDuration.of(Period.ofYears(cnt.intValue()), Duration.ZERO));
+
+    private static final Map<Timeframe, Timeframe> PREV = Map.of(
+            H1, M15,
+            H4, H1,
+            D1, H4,
+            W1, D1,
+            MN1, W1,
+            Y1, MN1
+    );
+
+    private static final Map<Timeframe, Timeframe> NEXT = Map.of(
+            M15, H1,
+            H1, H4,
+            H4, D1,
+            D1, W1,
+            W1, MN1,
+            MN1, Y1
+    );
 
     private final String code;
     private final Integer value;
@@ -47,12 +66,20 @@ public enum Timeframe {
     }
 
     public Optional<Timeframe> getNext() {
+        return Optional.ofNullable(NEXT.get(this));
+    }
+
+    public Optional<Timeframe> getPrev() {
+        return Optional.ofNullable(PREV.get(this));
+    }
+
+    public Optional<Timeframe> getUp() {
         return nextTimeframe == null
                 ? Optional.empty()
                 : Optional.of(Timeframe.valueOf(nextTimeframe));
     }
 
-    public Optional<Timeframe> getPrev() {
+    public Optional<Timeframe> getDown() {
         return prevTimeframe == null
                 ? Optional.empty()
                 : Optional.of(Timeframe.valueOf(prevTimeframe));
