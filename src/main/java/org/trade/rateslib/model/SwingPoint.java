@@ -69,6 +69,10 @@ public class SwingPoint implements Serializable {
         return Optional.ofNullable(lengthInBars);
     }
 
+    public Optional<Timeframe> getTf() {
+        return Timeframe.findByCode(timeframe);
+    }
+
     @Override
     public String toString() {
         return "SwingPoint{" +
