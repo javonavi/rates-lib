@@ -1,5 +1,7 @@
 package org.trade.rateslib.model;
 
+import org.trade.rateslib.data.RateEntity;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -161,5 +163,15 @@ public class Rate {
         int result = time.hashCode();
         result = 31 * result + timeframe.hashCode();
         return result;
+    }
+
+    public RateEntity toEntity() {
+        RateEntity r = new RateEntity();
+        r.setTime(time);
+        r.setOpen(open.doubleValue());
+        r.setHigh(high.doubleValue());
+        r.setLow(low.doubleValue());
+        r.setClose(close.doubleValue());
+        return r;
     }
 }
