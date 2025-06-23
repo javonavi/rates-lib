@@ -116,6 +116,7 @@ public class SwingsHandler {
                 .withDirection(direction)
                 .withTimeframe(timeframe)
                 .withSection(reverseBarsCount - 2)
+                .withTime(rate.getTime())
                 .build();
         context.setLastSwing(swing);
         return swing;
