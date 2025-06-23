@@ -12,7 +12,7 @@ class RatesCollection {
     }
 
     public int size() {
-        return size;
+        return rates.size();
     }
 
     public void add(Rate rate) {
