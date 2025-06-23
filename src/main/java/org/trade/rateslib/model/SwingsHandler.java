@@ -10,6 +10,7 @@ import org.trade.rateslib.data.impl.InMemoryRateRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,6 +35,7 @@ public class SwingsHandler {
     private final SwingsService swingsStorage;
     private final Logger log;
     private final Map<LocalDateTime, RateEntity> ratesCache = new HashMap<>();
+    private final RatesCollection ratesCollection;
 
     public SwingsHandler(int reverseBarsCount,
                          String timeframe,
@@ -49,6 +51,7 @@ public class SwingsHandler {
         this.inMemoryRateRepository = new InMemoryRateRepository();
         this.swingsStorage = swingsStorage;
         this.log = logger;
+        this.ratesCollection = new RatesCollection(reverseBarsCount);
     }
 
     public Integer getReverseBarsCount() {
@@ -63,12 +66,67 @@ public class SwingsHandler {
         return context;
     }
 
+    public synchronized Optional<SwingPointWithData> addRate(Rate rate) {
+        if (ratesCollection.size() < reverseBarsCount) {
+            ratesCollection.add(rate);
+            return Optional.empty();
+        }
+        Rate highRate = ratesCollection.highest();
+        Rate lowRate = ratesCollection.lowest();
+        double high = highRate.getHigh().doubleValue();
+        double low = lowRate.getLow().doubleValue();
+
+        ratesCollection.add(rate);
+
+        if (context.getLastSwing() == null) {
+            if (rate.getHigh().doubleValue() > high) {
+                SwingPoint swing = compileSwing(lowRate, SwingDirection.UP);
+                context.setHighRate(rate);
+                return Optional.of(new SwingPointWithData(swing, "", swing.getTime()));
+            } else if (rate.getLow().doubleValue() < low) {
+                SwingPoint swing = compileSwing(highRate, SwingDirection.DOWN);
+                context.setLowRate(rate);
+                return Optional.of(new SwingPointWithData(swing, "", swing.getTime()));
+            }
+        } else if (context.getLastSwing().getDirection() == SwingDirection.UP) {
+            if (rate.getHigh().doubleValue() > context.getHighRate().getHigh().doubleValue()) {
+                context.setHighRate(rate);
+            } else if (rate.getLow().doubleValue() < low) {
+                SwingPoint swing = compileSwing(context.getHighRate(), SwingDirection.DOWN);
+                context.setLowRate(rate);
+                return Optional.of(new SwingPointWithData(swing, "", swing.getTime()));
+            }
+        } else {
+            if (rate.getLow().doubleValue() < context.getLowRate().getLow().doubleValue()) {
+                context.setLowRate(rate);
+            } else if (rate.getHigh().doubleValue() > high) {
+                SwingPoint swing = compileSwing(context.getLowRate(), SwingDirection.UP);
+                context.setHighRate(rate);
+                return Optional.of(new SwingPointWithData(swing, "", swing.getTime()));
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private SwingPoint compileSwing(Rate rate,
+                                    SwingDirection direction) {
+        SwingPoint swing = SwingPoint.builder()
+                .withPrice(direction == SwingDirection.UP ? rate.getLow() : rate.getHigh())
+                .withDirection(direction)
+                .withTimeframe(timeframe)
+                .withSection(reverseBarsCount - 2)
+                .build();
+        context.setLastSwing(swing);
+        return swing;
+    }
+
     public synchronized Optional<SwingPointWithData> addRate(RateEntity rate) {
         Objects.requireNonNull(rate, "rate is null");
         log.debug("Add rate: rate={}", rate);
         inMemoryRateRepository.insert(rate);
         ratesCache.put(rate.getTime(), rate);
-        
+
         boolean debug = false;//LocalDateTime.parse("2021-01-08T06:00").equals(rate.getTime());
 
         if (debug) {
@@ -606,17 +664,17 @@ public class SwingsHandler {
     }
 
     private Optional<SwingPointWithData> reverse(LocalDateTime time,
-                                         boolean direction,
-                                         String cause,
-                                         InMemoryRateRepository inMemoryRateRepository) {
+                                                 boolean direction,
+                                                 String cause,
+                                                 InMemoryRateRepository inMemoryRateRepository) {
         return reverse(time, direction, cause, inMemoryRateRepository, null);
     }
 
     private Optional<SwingPointWithData> reverse(LocalDateTime time,
-                                         boolean direction,
-                                         String cause,
-                                         InMemoryRateRepository inMemoryRateRepository,
-                                         LocalDateTime newLastWorkingPoint) {
+                                                 boolean direction,
+                                                 String cause,
+                                                 InMemoryRateRepository inMemoryRateRepository,
+                                                 LocalDateTime newLastWorkingPoint) {
         log.debug("Reverse: direction={}, time={}, cause={}, lastWorkingPoint={}, period={}, newLastWorkingPoint={}",
                 direction, time, cause, context.getLastWorkingPoint(), timeframe, newLastWorkingPoint);
         Objects.requireNonNull(time, "time is null");

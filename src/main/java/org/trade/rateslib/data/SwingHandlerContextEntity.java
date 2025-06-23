@@ -1,5 +1,8 @@
 package org.trade.rateslib.data;
 
+import org.trade.rateslib.model.Rate;
+import org.trade.rateslib.model.SwingPoint;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -36,6 +39,11 @@ public class SwingHandlerContextEntity {
 
     private Double lastWorkingPrice;
 
+    private SwingPoint lastSwing;
+
+    private Rate lowRate;
+
+    private Rate highRate;
 
     @Override
     public SwingHandlerContextEntity clone() {
@@ -55,6 +63,9 @@ public class SwingHandlerContextEntity {
         entity.setLastDownSwing(getLastDownSwing());
         entity.setLastUpSwing(getLastUpSwing());
         entity.setLastWorkingPrice(getLastWorkingPrice());
+        entity.setLastSwing(getLastSwing());
+        entity.setLowRate(getLowRate());
+        entity.setHighRate(getHighRate());
 
         return entity;
     }
@@ -115,6 +126,19 @@ public class SwingHandlerContextEntity {
         return lastWorkingPrice;
     }
 
+    public SwingPoint getLastSwing() {
+        return lastSwing;
+    }
+
+    public Rate getLowRate() {
+        return lowRate;
+    }
+
+    public Rate getHighRate() {
+        return highRate;
+    }
+
+
     public void setTime(LocalDateTime time) {
         this.time = time;
     }
@@ -171,6 +195,18 @@ public class SwingHandlerContextEntity {
         this.lastWorkingPrice = lastWorkingPrice;
     }
 
+    public void setLowRate(Rate lowRate) {
+        this.lowRate = lowRate;
+    }
+
+    public void setHighRate(Rate highRate) {
+        this.highRate = highRate;
+    }
+
+    public void setLastSwing(SwingPoint lastSwing) {
+        this.lastSwing = lastSwing;
+    }
+
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -200,6 +236,9 @@ public class SwingHandlerContextEntity {
                 ", lastUpSwing=" + lastUpSwing +
                 ", lastDownSwing=" + lastDownSwing +
                 ", lastWorkingPrice=" + lastWorkingPrice +
+                ", lastSwing=" + lastSwing +
+                ", lowRate=" + lowRate +
+                ", highRate=" + highRate +
                 '}';
     }
 
