@@ -19,6 +19,8 @@ public interface SwingRepository {
 
     Optional<SwingEntity> findAfterTime(LocalDateTime time);
 
+    List<SwingEntity> findAfterTime(LocalDateTime time, int count);
+
     List<SwingEntity> findAllByTimeBetween(LocalDateTime timeStart, LocalDateTime timeEnd);
 
     SwingEntity findByTime(LocalDateTime time);

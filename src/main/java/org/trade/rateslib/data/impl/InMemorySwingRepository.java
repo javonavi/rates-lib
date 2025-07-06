@@ -70,6 +70,21 @@ public class InMemorySwingRepository implements SwingRepository {
     }
 
     @Override
+    public List<SwingEntity> findAfterTime(LocalDateTime time, int count) {
+        LocalDateTime curTime = time;
+        List<SwingEntity> result = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            var v = Optional.ofNullable(tree.higherEntry(curTime)).map(Map.Entry::getValue);
+            if (v.isEmpty()) {
+                break;
+            }
+            curTime = v.orElseThrow().getTime();
+            result.add(v.orElseThrow());
+        }
+        return result.stream().sorted(Comparator.comparing(SwingEntity::getTime)).toList();
+    }
+
+    @Override
     public List<SwingEntity> findAllByTimeBetween(LocalDateTime timeStart, LocalDateTime timeEnd) {
         if (timeStart.minusSeconds(timeStart.getSecond()).equals(timeEnd.minusSeconds(timeEnd.getSecond()))) {
             return Collections.singletonList(tree.get(timeStart));

@@ -328,4 +328,12 @@ public class SwingsService {
         return getRepository(stock, timeframe).findBeforeTime(time, count).stream()
                 .map(s -> convertEntityToSwing(s, timeframe)).toList();
     }
+
+    public List<SwingPoint> findSwingsAfterTime(String stock,
+                                                 String timeframe,
+                                                 LocalDateTime time,
+                                                 int count) {
+        return getRepository(stock, timeframe).findAfterTime(time, count).stream()
+                .map(s -> convertEntityToSwing(s, timeframe)).toList();
+    }
 }
