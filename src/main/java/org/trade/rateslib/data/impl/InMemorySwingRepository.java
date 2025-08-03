@@ -185,4 +185,8 @@ public class InMemorySwingRepository implements SwingRepository {
         return result.stream().sorted(Comparator.comparing(SwingEntity::getTime)).collect(Collectors.toList());
     }
 
+    @Override
+    public List<SwingEntity> getAll() {
+        return tree.values().stream().sorted(Comparator.comparing(SwingEntity::getTime)).toList();
+    }
 }

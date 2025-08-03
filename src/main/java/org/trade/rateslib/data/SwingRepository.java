@@ -46,4 +46,6 @@ public interface SwingRepository {
      */
     List<SwingEntity> findNearbySwings(SwingEntity swing,
                                        int steps);
+
+    List<SwingEntity> getAll();
 }
