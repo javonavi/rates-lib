@@ -61,6 +61,12 @@ public enum FiboLevel {
         );
     }
 
+    public static List<FiboLevel> getFull() {
+        return Arrays.stream(values())
+                .filter(f -> f.getValue() <= 1)
+                .sorted(Comparator.comparing(FiboLevel::getValue)).toList();
+    }
+
     public static Set<FiboLevel> getBased() {
         return Set.of(
                 FIBO_0_125,
