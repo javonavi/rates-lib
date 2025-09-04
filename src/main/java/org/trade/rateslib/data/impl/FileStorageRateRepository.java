@@ -210,6 +210,12 @@ public class FileStorageRateRepository implements RateRepository {
                         LocalDateTime.of(year, month, day, 0, 0, 0),
                         LocalDateTime.of(year, month, day, 0, 0, 0).plusDays(1).minusHours(1),
                         24);
+            case M15:
+                return new StorageBlock(
+                        base.resolve(String.format("%d", year)).resolve(String.format("%d", month)).resolve(String.format("%d", day)),
+                        LocalDateTime.of(year, month, day, 0, 0, 0),
+                        LocalDateTime.of(year, month, day, 0, 0, 0).plusDays(1).minusHours(1),
+                        96);
 
             default:
                 throw new RuntimeException("Unexpected timeframe: " + timeframe);
@@ -341,6 +347,7 @@ public class FileStorageRateRepository implements RateRepository {
                         Integer.parseInt(path3.get().getFileName().toString()), 1, 0, 0);
                 return loadFile(getBlockByTime(time2)).stream().min(Comparator.comparing(RateEntity::getTime)).stream().findFirst();
             case H1:
+            case M15:
                 var path4 = findFirstFile(base);
                 if (path4.isEmpty()) return Optional.empty();
                 var path5 = findFirstFile(path4.get());
