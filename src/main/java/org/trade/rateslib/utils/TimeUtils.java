@@ -54,6 +54,8 @@ public class TimeUtils {
 
     public static LocalDateTime plus(LocalDateTime time, Timeframe timeframe, long ratio) {
         switch (timeframe) {
+            case M15:
+                return time.plusMinutes(ratio * 15);
             case H1:
                 return time.plusHours(ratio);
             case H4:
@@ -82,6 +84,8 @@ public class TimeUtils {
 
     public static LocalDateTime minus(LocalDateTime time, Timeframe timeframe, long ratio) {
         switch (timeframe) {
+            case M15:
+                return time.minusMinutes(ratio * 15);
             case H1:
                 return time.minusHours(ratio);
             case H4:
