@@ -10,7 +10,8 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public enum Timeframe {
-    M5("M5", 5, "M15", null, cnt -> TimeframeDuration.of(Period.ZERO, Duration.ofMinutes(cnt * 5))),
+    M1("M1", 1, "M5", null, cnt -> TimeframeDuration.of(Period.ZERO, Duration.ofMinutes(cnt))),
+    M5("M5", 5, "M15", "M1", cnt -> TimeframeDuration.of(Period.ZERO, Duration.ofMinutes(cnt * 5))),
     M15("M15", 15, "H1", "M5", cnt -> TimeframeDuration.of(Period.ZERO, Duration.ofMinutes(cnt * 15))),
     H1("H1", 60, "H4", "M15", cnt -> TimeframeDuration.of(Period.ZERO, Duration.ofHours(cnt))),
     H4("H4", 240, "H8", "H1", cnt -> TimeframeDuration.of(Period.ZERO, Duration.ofHours(cnt * 4))),
