@@ -14,6 +14,7 @@ import static java.lang.Math.ceil;
 
 public enum FiboLevel {
 
+    FIBO_0_062(0.0625),
     FIBO_0_125(0.125),
     FIBO_0_250(0.250),
     FIBO_0_333(0.333),
@@ -23,7 +24,9 @@ public enum FiboLevel {
     FIBO_0_666(0.666),
     FIBO_0_750(0.750),
     FIBO_0_875(0.875),
+    FIBO_0_937(0.9375),
     FIBO_1_000(1.000),
+    FIBO_1_062(1.0625),
     FIBO_1_125(1.125),
     FIBO_1_250(1.250),
     FIBO_1_333(1.333),
@@ -33,6 +36,7 @@ public enum FiboLevel {
     FIBO_1_666(1.666),
     FIBO_1_750(1.750),
     FIBO_1_875(1.875),
+    FIBO_1_937(1.9375),
     FIBO_2_000(2.000);
 
 
@@ -69,6 +73,7 @@ public enum FiboLevel {
 
     public static Set<FiboLevel> getBased() {
         return Set.of(
+                FIBO_0_062,
                 FIBO_0_125,
                 FIBO_0_250,
                 FIBO_0_333,
@@ -76,6 +81,7 @@ public enum FiboLevel {
                 FIBO_0_666,
                 FIBO_0_750,
                 FIBO_0_875,
+                FIBO_0_937,
                 FIBO_1_000
         );
     }
