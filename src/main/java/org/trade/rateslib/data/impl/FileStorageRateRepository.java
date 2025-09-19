@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -76,12 +75,11 @@ public class FileStorageRateRepository implements RateRepository {
 
     @Override
     public List<RateEntity> findAllByTimeBetween(LocalDateTime timeStart, LocalDateTime timeEnd) {
-        Set<RateEntity> result = new HashSet<>();
         StorageBlock block = getBlockByTime(timeStart);
-        result.addAll(loadFile(block).stream()
+        Set<RateEntity> result = loadFile(block).stream()
                 .filter(r -> !r.getTime().isBefore(timeStart))
                 .filter(r -> !r.getTime().isAfter(timeEnd))
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toSet());
         LocalDateTime start = TimeUtils.plus(block.getEnd(), timeframe);
         while (!start.isAfter(timeEnd)) {
             block = getBlockByTime(start);
@@ -116,8 +114,7 @@ public class FileStorageRateRepository implements RateRepository {
         if (rates.stream().anyMatch(r -> r.getTime().equals(rateEntity.getTime()))) {
             throw new RuntimeException("Rate already exists: rate=" + rateEntity);
         }
-        List<RateEntity> result = new ArrayList<>();
-        result.addAll(rates);
+        List<RateEntity> result = new ArrayList<>(rates);
         result.add(rateEntity);
         saveFile(block, result);
     }
@@ -157,11 +154,10 @@ public class FileStorageRateRepository implements RateRepository {
     @Override
     public List<RateEntity> getLatest(int count) {
         Optional<StorageBlock> latestBlock = getLatestBlock();
-        if (!latestBlock.isPresent()) {
+        if (latestBlock.isEmpty()) {
             return Collections.emptyList();
         }
-        List<RateEntity> result = new ArrayList<>();
-        result.addAll(loadFile(latestBlock.get()));
+        List<RateEntity> result = new ArrayList<>(loadFile(latestBlock.get()));
         LocalDateTime end = TimeUtils.minus(latestBlock.get().getStart(), timeframe);
         while (result.size() < count) {
             StorageBlock block = getBlockByTime(end);
@@ -214,7 +210,7 @@ public class FileStorageRateRepository implements RateRepository {
                 return new StorageBlock(
                         base.resolve(String.format("%d", year)).resolve(String.format("%d", month)).resolve(String.format("%d", day)),
                         LocalDateTime.of(year, month, day, 0, 0, 0),
-                        LocalDateTime.of(year, month, day, 0, 0, 0).plusDays(1).minusHours(1),
+                        LocalDateTime.of(year, month, day, 0, 0, 0).plusDays(1).minusMinutes(15),
                         96);
 
             default:
@@ -265,7 +261,7 @@ public class FileStorageRateRepository implements RateRepository {
         Path dir = base;
         for (int i = 0; i < 10; i++) {
             Optional<File> f = getLatestFile(dir);
-            if (!f.isPresent()) {
+            if (f.isEmpty()) {
                 break;
             }
             result.add(f.get().getName());
@@ -293,9 +289,9 @@ public class FileStorageRateRepository implements RateRepository {
 
     @Override
     public List<RateEntity> getLatest(LocalDateTime beforeTime, int limit) {
-        List<RateEntity> result = new ArrayList<>();
         StorageBlock block = getBlockByTime(beforeTime);
-        result.addAll(loadFile(block).stream().filter(r -> r.getTime().isBefore(beforeTime)).collect(Collectors.toList()));
+        List<RateEntity> result = loadFile(block).stream().filter(r -> r.getTime().isBefore(beforeTime))
+                .collect(Collectors.toList());
         int emptyBlocksCount = 0;
         while (result.size() < limit) {
             block = getBlockBefore(block);
@@ -314,7 +310,7 @@ public class FileStorageRateRepository implements RateRepository {
                 break;
             }
             emptyBlocksCount = 0;
-            result.addAll(loadedRates.stream().filter(r -> r.getTime().isBefore(beforeTime)).collect(Collectors.toList()));
+            result.addAll(loadedRates.stream().filter(r -> r.getTime().isBefore(beforeTime)).toList());
         }
         return result.stream()
                 .sorted(Comparator.comparing(RateEntity::getTime, Comparator.reverseOrder()))
