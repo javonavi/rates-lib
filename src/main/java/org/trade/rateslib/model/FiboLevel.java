@@ -86,6 +86,22 @@ public enum FiboLevel {
         );
     }
 
+    public static Set<Double> getBasedValuesWithZero() {
+        return Set.of(
+                0.0,
+                FIBO_0_062.getValue(),
+                FIBO_0_125.getValue(),
+                FIBO_0_250.getValue(),
+                FIBO_0_333.getValue(),
+                FIBO_0_500.getValue(),
+                FIBO_0_666.getValue(),
+                FIBO_0_750.getValue(),
+                FIBO_0_875.getValue(),
+                FIBO_0_937.getValue(),
+                FIBO_1_000.getValue()
+        );
+    }
+
     public static Set<FiboLevel> getCommon() {
         return Set.of(
                 FIBO_0_250,
