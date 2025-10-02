@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -86,20 +87,24 @@ public enum FiboLevel {
         );
     }
 
-    public static Set<Double> getBasedValuesWithZero() {
-        return Set.of(
-                0.0,
-                FIBO_0_062.getValue(),
-                FIBO_0_125.getValue(),
-                FIBO_0_250.getValue(),
-                FIBO_0_333.getValue(),
-                FIBO_0_500.getValue(),
-                FIBO_0_666.getValue(),
-                FIBO_0_750.getValue(),
-                FIBO_0_875.getValue(),
-                FIBO_0_937.getValue(),
-                FIBO_1_000.getValue()
-        );
+    public static Set<Double> getBasedValuesWithZero(int cyclesCount) {
+        Set<Double> result = new HashSet<>();
+        for (int i = 0; i < cyclesCount; i++) {
+            result.addAll(Set.of(
+                    0.0 + i,
+                    FIBO_0_062.getValue() + i,
+                    FIBO_0_125.getValue() + i,
+                    FIBO_0_250.getValue() + i,
+                    FIBO_0_333.getValue() + i,
+                    FIBO_0_500.getValue() + i,
+                    FIBO_0_666.getValue() + i,
+                    FIBO_0_750.getValue() + i,
+                    FIBO_0_875.getValue() + i,
+                    FIBO_0_937.getValue() + i,
+                    FIBO_1_000.getValue() + i
+            ));
+        }
+        return result;
     }
 
     public static Set<FiboLevel> getCommon() {
