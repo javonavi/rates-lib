@@ -220,6 +220,7 @@ public class SwingsService {
                 .withSection(0)
                 .withTime(entity.getTime())
                 .withTimeframe(timeframe)
+                .withGenerateTime(entity.getGenerateTime())
                 .build();
     }
 

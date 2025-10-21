@@ -16,6 +16,7 @@ public class SwingPoint implements Serializable {
     private final String timeframe;
     private final Double length;
     private final Double lengthInBars;
+    private final LocalDateTime generateTime;
 
     private SwingPoint(LocalDateTime time,
                        BigDecimal price,
@@ -23,7 +24,8 @@ public class SwingPoint implements Serializable {
                        Integer section,
                        String timeframe,
                        Double length,
-                       Double lengthInBars) {
+                       Double lengthInBars,
+                       LocalDateTime generateTime) {
         this.time = Objects.requireNonNull(time, "time is null");
         this.price = Objects.requireNonNull(price, "price is null");
         this.direction = Objects.requireNonNull(direction, "direction is null");
@@ -31,6 +33,7 @@ public class SwingPoint implements Serializable {
         this.timeframe = Objects.requireNonNull(timeframe, "timeframe is null");
         this.length = length;
         this.lengthInBars = lengthInBars;
+        this.generateTime = generateTime;
     }
 
     public LocalDateTime getTime() {
@@ -73,6 +76,10 @@ public class SwingPoint implements Serializable {
         return Timeframe.findByCode(timeframe);
     }
 
+    public LocalDateTime getGenerateTime() {
+        return generateTime;
+    }
+
     @Override
     public String toString() {
         return "SwingPoint{" +
@@ -83,6 +90,7 @@ public class SwingPoint implements Serializable {
                 ", timeframe=" + timeframe +
                 ", length=" + length +
                 ", lengthInBars=" + lengthInBars +
+                ", generateTime=" + generateTime +
                 '}';
     }
 
@@ -128,6 +136,7 @@ public class SwingPoint implements Serializable {
         private String timeframe;
         private Double length;
         private Double lengthInBars;
+        private LocalDateTime generateTime;
 
         public Builder fromSwingPoint(SwingPoint swingPoint) {
             this.time = swingPoint.getTime();
@@ -137,6 +146,7 @@ public class SwingPoint implements Serializable {
             this.timeframe = swingPoint.getTimeframe();
             this.length = swingPoint.getLengthOpt().orElse(null);
             this.lengthInBars = swingPoint.getlengthInBarsOpt().orElse(null);
+            this.generateTime = swingPoint.getGenerateTime();
             return this;
         }
 
@@ -175,6 +185,11 @@ public class SwingPoint implements Serializable {
             return this;
         }
 
+        public Builder withGenerateTime(LocalDateTime generateTime) {
+            this.generateTime = generateTime;
+            return this;
+        }
+
         public SwingPoint build() {
             return new SwingPoint(
                     time,
@@ -183,7 +198,8 @@ public class SwingPoint implements Serializable {
                     section,
                     timeframe,
                     length,
-                    lengthInBars
+                    lengthInBars,
+                    generateTime
             );
         }
     }
