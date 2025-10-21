@@ -18,6 +18,8 @@ public class SwingEntity {
 
     private Double length;
 
+    private LocalDateTime generateTime;
+
     public LocalDateTime getTime() {
         return time;
     }
@@ -38,6 +40,10 @@ public class SwingEntity {
         return length;
     }
 
+    public LocalDateTime getGenerateTime() {
+        return generateTime;
+    }
+
     public void setTime(LocalDateTime time) {
         this.time = time;
     }
@@ -56,6 +62,10 @@ public class SwingEntity {
 
     public void setLength(Double length) {
         this.length = length;
+    }
+
+    public void setGenerateTime(LocalDateTime generateTime) {
+        this.generateTime = generateTime;
     }
 
     @Override
@@ -79,6 +89,7 @@ public class SwingEntity {
                 ", price=" + price +
                 ", lengthInBars=" + lengthInBars +
                 ", length=" + length +
+                ", generateTime=" + generateTime +
                 '}';
     }
 }
