@@ -343,4 +343,11 @@ public class SwingsService {
         return getRepository(stock, timeframe).getAll().stream()
                 .map(s -> convertEntityToSwing(s, timeframe)).toList();
     }
+
+    public void initVirtualLatestSwing(String stock,
+                                       String timeframe,
+                                       SwingPoint swing) {
+        getRepository(stock, timeframe).initVirtualLatestSwing(swing.getEntity());
+    }
+
 }
