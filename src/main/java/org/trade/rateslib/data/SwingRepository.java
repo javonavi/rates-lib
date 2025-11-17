@@ -48,4 +48,9 @@ public interface SwingRepository {
                                        int steps);
 
     List<SwingEntity> getAll();
+
+    /**
+     * Добавляет еще не сформировавшийся свинг
+     */
+    void initVirtualLatestSwing(SwingEntity swing);
 }

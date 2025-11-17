@@ -189,4 +189,9 @@ public class InMemorySwingRepository implements SwingRepository {
     public List<SwingEntity> getAll() {
         return tree.values().stream().sorted(Comparator.comparing(SwingEntity::getTime)).toList();
     }
+
+    @Override
+    public void initVirtualLatestSwing(SwingEntity swing) {
+        save(swing);
+    }
 }
