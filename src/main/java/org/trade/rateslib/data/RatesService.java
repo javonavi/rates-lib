@@ -130,6 +130,10 @@ public class RatesService {
         return Optional.ofNullable(getRepository(stock, timeframe).getByIndex(index));
     }
 
+    public Optional<RateEntity> getRate(String stock, String timeframe, LocalDateTime time) {
+        return getRepository(stock, timeframe).findById(time);
+    }
+
     public Optional<RateEntity> getLatestRate(String stock, String timeframe) {
         return getRate(stock, timeframe, 0);
     }
