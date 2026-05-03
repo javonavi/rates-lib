@@ -13,19 +13,22 @@ public class Rate {
     private final BigDecimal high;
     private final BigDecimal low;
     private final String timeframe;
+    private final BigDecimal volume;
 
     private Rate(LocalDateTime time,
                  BigDecimal open,
                  BigDecimal close,
                  BigDecimal high,
                  BigDecimal low,
-                 String timeframe) {
+                 String timeframe,
+                 BigDecimal volume) {
         this.time = Objects.requireNonNull(time, "time is null");
         this.open = Objects.requireNonNull(open, "open is null");
         this.close = Objects.requireNonNull(close, "close is null");
         this.high = Objects.requireNonNull(high, "high is null");
         this.low = Objects.requireNonNull(low, "low is null");
         this.timeframe = Objects.requireNonNull(timeframe, "timeframe is null");
+        this.volume = volume;
     }
 
     public LocalDateTime getTime() {
@@ -52,6 +55,10 @@ public class Rate {
         return timeframe;
     }
 
+    public BigDecimal getVolume() {
+        return volume;
+    }
+
     @Override
     public String toString() {
         return "Rate{" +
@@ -61,6 +68,7 @@ public class Rate {
                 ", low=" + String.format("%.6f", low) +
                 ", close=" + String.format("%.6f", close) +
                 ", timeframe=" + timeframe +
+                ", volume=" + volume +
                 '}';
     }
 
@@ -75,6 +83,7 @@ public class Rate {
         private BigDecimal high;
         private BigDecimal low;
         private String timeframe;
+        private BigDecimal volume;
 
         private Builder() {
         }
@@ -136,11 +145,17 @@ public class Rate {
             this.open = rate.open;
             this.time = rate.time;
             this.timeframe = rate.timeframe;
+            this.volume = rate.getVolume();
+            return this;
+        }
+
+        public Builder withVolume(BigDecimal volume) {
+            this.volume = volume;
             return this;
         }
 
         public Rate build() {
-            return new Rate(time, open, close, high, low, timeframe);
+            return new Rate(time, open, close, high, low, timeframe, volume);
         }
     }
 
@@ -155,7 +170,7 @@ public class Rate {
         }
         Rate rate = (Rate) o;
         if (!time.equals(rate.time)) return false;
-        return timeframe == rate.timeframe;
+        return timeframe.equals(rate.timeframe);
     }
 
     @Override
