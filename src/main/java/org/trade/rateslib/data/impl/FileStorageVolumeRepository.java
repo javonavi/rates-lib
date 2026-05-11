@@ -3,7 +3,6 @@ package org.trade.rateslib.data.impl;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.slf4j.Logger;
-import org.trade.rateslib.data.RateEntity;
 import org.trade.rateslib.model.Timeframe;
 import org.trade.rateslib.utils.TimeUtils;
 
@@ -17,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,7 +47,7 @@ public class FileStorageVolumeRepository {
 
     public List<Volume> findAllByTimeBetween(LocalDateTime timeStart, LocalDateTime timeEnd) {
         StorageBlock block = getBlockByTime(timeStart);
-        List<Volume> result = loadFile(block);
+        List<Volume> result = new ArrayList<>(loadFile(block));
         LocalDateTime start = TimeUtils.plus(block.getEnd(), timeframe);
         while (!start.isAfter(timeEnd)) {
             block = getBlockByTime(start);
@@ -59,10 +59,10 @@ public class FileStorageVolumeRepository {
 
     public void update(Volume volume) {
         StorageBlock block = getBlockByTime(volume.time());
-        Map<LocalDateTime, Volume> rates = loadFile(block).stream().collect(Collectors.toMap(
+        Map<LocalDateTime, Volume> rates = new HashMap<>(loadFile(block).stream().collect(Collectors.toMap(
                 Volume::time,
                 Function.identity()
-        ));
+        )));
         rates.remove(volume.time());
         rates.put(volume.time(), volume);
         List<Volume> result = new ArrayList<>(rates.values());
