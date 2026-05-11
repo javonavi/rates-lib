@@ -56,7 +56,7 @@ public class Rate {
     }
 
     public BigDecimal getVolume() {
-        return volume;
+        return volume == null ? BigDecimal.ZERO : volume;
     }
 
     @Override
