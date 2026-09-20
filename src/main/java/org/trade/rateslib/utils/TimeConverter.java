@@ -3,7 +3,6 @@ package org.trade.rateslib.utils;
 import org.trade.rateslib.model.Timeframe;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 public class TimeConverter {
@@ -23,7 +22,7 @@ public class TimeConverter {
         if (fromTimeframe.getValue() > toTimeframe.getValue()) {
             return null;
         }
-        if (fromTimeframe.getValue() == toTimeframe.getValue()) {
+        if (fromTimeframe.getValue().equals(toTimeframe.getValue())) {
             return time;
         }
         Timeframe curTimeframe = fromTimeframe;
@@ -33,10 +32,10 @@ public class TimeConverter {
             if (curTime == null) {
                 return null;
             }
-            if (curTimeframe.getNext().isEmpty()) {
+            if (curTimeframe.getUp().isEmpty()) {
                 break;
             }
-            curTimeframe = curTimeframe.getNext().get();
+            curTimeframe = curTimeframe.getUp().get();
         }
         if (toTimeframe == Timeframe.W1 && curTime.getDayOfWeek().getValue() == 7) {
             return curTime.plusDays(1);
@@ -48,11 +47,11 @@ public class TimeConverter {
                                                        LocalDateTime time) {
         Objects.requireNonNull(currentTimeframe, "currentTimeframe");
         Objects.requireNonNull(time, "time");
-        if (!currentTimeframe.getNext().isPresent()) {
+        if (currentTimeframe.getUp().isEmpty()) {
             return null;
         }
         int month;
-        switch (currentTimeframe.getNext().get()) {
+        switch (currentTimeframe.getUp().get()) {
             case M5:
                 return calcTimeForMinutes(time, 5);
             case M15:
@@ -78,8 +77,7 @@ public class TimeConverter {
                 calcedTimeMN1 = calcedTimeMN1.minusHours(calcedTimeMN1.getHour());
                 return calcedTimeMN1.minusDays(calcedTimeMN1.getDayOfMonth() - 1);
             case MN3:
-                month = time.getMonth().getValue();
-                if (month >= 3) month -= (month % 3);
+                month = ((time.getMonthValue() - 1) / 3) * 3 + 1;
                 return LocalDateTime.of(time.getYear(), month, 1, 0, 0);
             case Y1:
                 return LocalDateTime.of(time.getYear(), 1, 1, 0, 0);
