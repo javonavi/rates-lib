@@ -6,8 +6,8 @@ import org.trade.rateslib.model.Timeframe;
 import org.trade.rateslib.utils.TimeframeProvider;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -247,24 +247,12 @@ public class SwingsService {
                     .filter(swing -> swing.getDirection() == swingDirection)
                     .collect(Collectors.toList());
             if (!directedCandidates.isEmpty()) {
-                double minPriceDiff = directedCandidates.stream()
-                        .mapToDouble(s -> abs(s.getPrice() - price)).min().orElse(0D);
-                double maxPriceDiff = directedCandidates.stream()
-                        .mapToDouble(s -> abs(s.getPrice() - price)).max().orElse(0D);
-                double minTimeDiff = directedCandidates.stream()
-                        .mapToDouble(s -> abs(ChronoUnit.MINUTES.between(s.getTime(), time))).min().orElse(0D);
-                double maxTimeDiff = directedCandidates.stream()
-                        .mapToDouble(s -> abs(ChronoUnit.MINUTES.between(s.getTime(), time))).max().orElse(0D);
+                double windowMinutes = upperTimeframe.getValue();
                 Optional<SwingEntity> swingEntity = directedCandidates.stream()
-                        .min(Comparator.comparingDouble(s -> {
-                            double priceScore = maxPriceDiff > minPriceDiff
-                                    ? (abs(s.getPrice() - price) - minPriceDiff) / (maxPriceDiff - minPriceDiff)
-                                    : 0D;
-                            double timeScore = maxTimeDiff > minTimeDiff
-                                    ? (abs(ChronoUnit.MINUTES.between(s.getTime(), time)) - minTimeDiff) / (maxTimeDiff - minTimeDiff)
-                                    : 0D;
-                            return priceScore + timeScore;
-                        }));
+                        .min(Comparator.comparingDouble(s ->
+                                100D * abs(s.getPrice() - price) / price
+                                        + 100D * Duration.between(time, s.getTime()).abs().toMillis()
+                                        / (60000D * windowMinutes)));
                 if (swingEntity.isPresent()) {
                     String tf = currentTimeframe.getCode();
                     return swingEntity.map(se -> convertEntityToSwing(se, tf));
