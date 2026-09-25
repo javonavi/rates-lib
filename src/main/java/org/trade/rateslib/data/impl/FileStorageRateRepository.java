@@ -159,12 +159,22 @@ public class FileStorageRateRepository implements RateRepository {
         }
         List<RateEntity> result = new ArrayList<>(loadFile(latestBlock.get()));
         LocalDateTime end = TimeUtils.minus(latestBlock.get().getStart(), timeframe);
+        int emptyBlocksCount = 0;
         while (result.size() < count) {
             StorageBlock block = getBlockByTime(end);
             if (!block.getPath().toFile().exists()) {
-                break;
+                emptyBlocksCount++;
+                if (result.isEmpty() ? emptyBlocksCount > 100 : emptyBlocksCount > 7) {
+                    break;
+                }
+            } else {
+                List<RateEntity> loadedRates = loadFile(block);
+                if (loadedRates.isEmpty()) {
+                    break;
+                }
+                emptyBlocksCount = 0;
+                result.addAll(loadedRates);
             }
-            result.addAll(loadFile(block));
             end = TimeUtils.minus(block.getStart(), timeframe);
         }
         return result.stream()

@@ -5,10 +5,13 @@ import org.slf4j.impl.StaticLoggerBinder;
 import org.trade.rateslib.data.RateEntity;
 import org.trade.rateslib.model.Timeframe;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +35,38 @@ public class FileStorageRateRepositoryTest {
         times.forEach(t -> insertRate(repository, t));
         List<RateEntity> rates = repository.getLatest(5);
         assertEquals(rates.size(), 5);
+    }
+
+    @Test
+    public void test_get_latest_with_gap() throws Exception {
+        Timeframe timeframe = Timeframe.H1;
+        Path stockPath = path.resolve("GAPTEST");
+        deleteDirectory(stockPath);
+        FileStorageRateRepository repository = new FileStorageRateRepository(path, "GAPTEST", timeframe, StaticLoggerBinder.getSingleton().getLoggerFactory().getLogger("test"));
+        for (int day = 10; day <= 12; day++) {
+            for (int hour = 0; hour <= 2; hour++) {
+                insertRate(repository, LocalDateTime.of(2021, 1, day, hour, 0));
+            }
+        }
+        for (int day = 1; day <= 5; day++) {
+            for (int hour = 0; hour <= 2; hour++) {
+                insertRate(repository, LocalDateTime.of(2021, 1, day, hour, 0));
+            }
+        }
+        List<RateEntity> rates = repository.getLatest(100);
+        assertEquals(24, rates.size());
+        assertEquals(LocalDateTime.of(2021, 1, 1, 0, 0), rates.get(0).getTime());
+        assertEquals(LocalDateTime.of(2021, 1, 12, 2, 0), rates.get(rates.size() - 1).getTime());
+        deleteDirectory(stockPath);
+    }
+
+    private void deleteDirectory(Path dir) throws Exception {
+        if (!dir.toFile().exists()) {
+            return;
+        }
+        try (var stream = Files.walk(dir)) {
+            stream.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+        }
     }
 
     private RateEntity getRate(LocalDateTime time) {
