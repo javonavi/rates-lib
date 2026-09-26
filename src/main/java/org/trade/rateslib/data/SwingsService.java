@@ -266,6 +266,57 @@ public class SwingsService {
         return Optional.empty();
     }
 
+    /**
+     * Находит свинг на текущем таймфрейме, соответствующий свингу старшего таймфрейма.
+     * Среди кандидатов нужного направления в пределах одного бара старшего таймфрейма
+     * выбирается экстремальный по цене: с минимальной ценой для направления UP,
+     * с максимальной - для DOWN. При равной цене выбирается ближайший по времени.
+     * Если на текущем таймфрейме кандидатов нет, спускается на таймфрейм ниже.
+     *
+     * @param stock          Товар
+     * @param timeframe      Таймфрейм, на котором ищем свинг
+     * @param time           Время свинга старшего таймфрейма
+     * @param swingDirection Направление искомого свинга
+     * @return
+     */
+    public Optional<SwingPoint> findExtremeSwing(String stock,
+                                                 String timeframe,
+                                                 LocalDateTime time,
+                                                 boolean swingDirection) {
+        requireNonNull(stock, "stock");
+        requireNonNull(timeframe, "timeframe");
+        requireNonNull(time, "time");
+        Timeframe currentTimeframe = Timeframe.valueOf(timeframe.toUpperCase());
+        Timeframe upperTimeframe = currentTimeframe.getNext().get();
+        LocalDateTime fromTime = time.minusMinutes(upperTimeframe.getValue());
+        LocalDateTime toTime = time.plusMinutes(upperTimeframe.getValue());
+        while (true) {
+            SwingRepository swingRepository = getRepository(stock, currentTimeframe.getCode().toLowerCase());
+            if (swingRepository == null) {
+                break;
+            }
+            List<SwingEntity> directedCandidates = swingRepository.findAllByTimeBetween(fromTime, toTime).stream()
+                    .filter(swing -> swing.getDirection() == swingDirection)
+                    .collect(Collectors.toList());
+            if (!directedCandidates.isEmpty()) {
+                Comparator<SwingEntity> byPrice = swingDirection
+                        ? Comparator.comparingDouble(SwingEntity::getPrice)
+                        : Comparator.comparingDouble(SwingEntity::getPrice).reversed();
+                Comparator<SwingEntity> byTimeCloseness = Comparator.comparingLong(s ->
+                        Duration.between(time, s.getTime()).abs().toMillis());
+                String tf = currentTimeframe.getCode();
+                return directedCandidates.stream()
+                        .min(byPrice.thenComparing(byTimeCloseness))
+                        .map(se -> convertEntityToSwing(se, tf));
+            }
+            if (currentTimeframe.getPrev().isEmpty()) {
+                break;
+            }
+            currentTimeframe = currentTimeframe.getPrev().get();
+        }
+        return Optional.empty();
+    }
+
     public List<SwingPoint> findSwingsBetween(String stock,
                                               String timeframe,
                                               LocalDateTime fromTime,
