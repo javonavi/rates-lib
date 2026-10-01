@@ -26,6 +26,10 @@ public class TimeUtils {
 
     public static long calcDuration(Timeframe timeframe, ZonedDateTime time1, ZonedDateTime time2) {
         switch (timeframe) {
+            case M5:
+                return ChronoUnit.MINUTES.between(time1, time2) / 5;
+            case M15:
+                return ChronoUnit.MINUTES.between(time1, time2) / 15;
             case H1:
                 return ChronoUnit.HOURS.between(time1, time2);
             case H4:

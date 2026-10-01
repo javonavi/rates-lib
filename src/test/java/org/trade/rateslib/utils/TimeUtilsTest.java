@@ -46,6 +46,14 @@ public class TimeUtilsTest {
         assertEquals(19, TimeUtils.calcDuration(Timeframe.W1,
                 LocalDate.of(2025, 4, 7).atTime(0, 0),
                 LocalDate.of(2025, 8, 18).atTime(0, 0)));
+
+        assertEquals(159, TimeUtils.calcDuration(Timeframe.M15,
+                LocalDateTime.of(2026, 9, 22, 4, 30),
+                LocalDateTime.of(2026, 9, 23, 20, 15)));
+
+        assertEquals(9, TimeUtils.calcDuration(Timeframe.M5,
+                LocalDateTime.of(2026, 9, 22, 10, 0),
+                LocalDateTime.of(2026, 9, 22, 10, 45)));
     }
 
 }
