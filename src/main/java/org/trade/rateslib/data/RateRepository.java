@@ -39,4 +39,6 @@ public interface RateRepository {
                                int count);
 
     Optional<RateEntity> getFirstRate();
+
+    Optional<RateEntity> getNextRate(LocalDateTime beforeTime);
 }

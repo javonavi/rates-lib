@@ -208,4 +208,10 @@ public class RatesService {
                                              String timeframe) {
         return getRepository(stock, timeframe).getFirstRate();
     }
+
+    public Optional<RateEntity> getNext(String stock,
+                                        String timeframe,
+                                        LocalDateTime currentTime) {
+        return getRepository(stock, timeframe).getNextRate(currentTime);
+    }
 }

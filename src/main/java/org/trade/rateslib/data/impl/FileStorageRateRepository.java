@@ -266,6 +266,10 @@ public class FileStorageRateRepository implements RateRepository {
         return getBlockByTime(TimeUtils.minus(block.getStart(), timeframe));
     }
 
+    private StorageBlock getBlockAfter(StorageBlock block) {
+        return getBlockByTime(TimeUtils.plus(block.getEnd(), timeframe));
+    }
+
     private List<String> getLatestFileRecursive(Path base) {
         List<String> result = new ArrayList<>();
         Path dir = base;
@@ -290,6 +294,7 @@ public class FileStorageRateRepository implements RateRepository {
         }
         return Stream.of(files)
                 .map(File::getName)
+                .filter(name -> name.matches("\\d+"))
                 .map(Integer::parseInt)
                 .max(Integer::compare)
                 .map(i -> base.resolve(i.toString()))
@@ -372,9 +377,27 @@ public class FileStorageRateRepository implements RateRepository {
         }
     }
 
+    @Override
+    public Optional<RateEntity> getNextRate(LocalDateTime beforeTime) {
+        var block = getBlockByTime(beforeTime);
+        var result = loadFile(block).stream()
+                .filter(r -> r.getTime().isAfter(beforeTime))
+                .min(Comparator.comparing(RateEntity::getTime));
+        if (result.isPresent()) {
+            return result;
+        }
+        block = getBlockAfter(block);
+        return loadFile(block).stream()
+                .filter(r -> r.getTime().isAfter(beforeTime))
+                .min(Comparator.comparing(RateEntity::getTime));
+    }
+
     private Optional<Path> findFirstFile(Path path) {
         try (var stream = Files.list(path)) {
-            return stream.sorted().findFirst();
+            return stream
+                    .filter(file -> file.getFileName().toString().matches("\\d+"))
+                    .sorted()
+                    .findFirst();
         } catch (IOException e) {
             log.warn("Error on list directory: path={}", path);
             return Optional.empty();

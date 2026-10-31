@@ -161,6 +161,11 @@ public class InMemoryRateRepository implements RateRepository {
         return Optional.ofNullable(tree.firstEntry()).map(Map.Entry::getValue);
     }
 
+    @Override
+    public Optional<RateEntity> getNextRate(LocalDateTime beforeTime) {
+        return Optional.ofNullable(tree.higherKey(beforeTime)).map(tree::get);
+    }
+
     public Optional<RateEntity> getHighestRate(LocalDateTime fromTime, LocalDateTime toTime) {
         return findAllByTimeBetween(fromTime, toTime)
                 .stream().max(Comparator.comparing(RateEntity::getHigh));
